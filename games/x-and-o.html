@@ -1,0 +1,803 @@
+<!doctype html>
+<html lang="ar" dir="rtl"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>تحدي الفراعنة — بوابة ألعاب مكتبة GU</title>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Marcellus&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --stone-deep: #16110c;
+      --stone-mid: #241b12;
+      --stone-panel: #2b2015;
+      --sandstone: #d8b98a;
+      --gold: #e8c15f;
+      --gold-bright: #f6dd8f;
+      --bronze: #9c6a35;
+      --turquoise: #2fb8ac;
+      --turquoise-bright: #6fe0d3;
+      --ember: #c9662b;
+      --ink: #f0e3c8;
+      --muted: #b8a582;
+      --line: rgba(232, 193, 95, .22);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      min-height: 100%;
+      font-family: "Cormorant Garamond", serif;
+      color: var(--ink);
+      background: var(--stone-deep);
+    }
+
+    button, input { font: inherit; }
+
+    /* ---------- Stone chamber background ---------- */
+    .game-shell {
+      width: 100%;
+      min-height: 100vh;
+      position: relative;
+      isolation: isolate;
+      overflow: hidden;
+      padding: 34px 18px 46px;
+      background:
+        radial-gradient(ellipse 900px 500px at 20% -10%, rgba(233, 150, 60, .16), transparent 60%),
+        radial-gradient(ellipse 700px 600px at 100% 10%, rgba(47, 184, 172, .10), transparent 55%),
+        radial-gradient(ellipse 800px 700px at 50% 120%, rgba(233, 150, 60, .10), transparent 60%),
+        repeating-linear-gradient(115deg, rgba(0,0,0,.10) 0px, rgba(0,0,0,.10) 2px, transparent 2px, transparent 90px),
+        repeating-linear-gradient(25deg, rgba(255,255,255,.02) 0px, rgba(255,255,255,.02) 1px, transparent 1px, transparent 70px),
+        linear-gradient(160deg, #1c150e 0%, #16110c 45%, #100c08 100%);
+    }
+
+    /* faint hieroglyph texture */
+    .game-shell::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -2;
+      opacity: .07;
+      mix-blend-mode: screen;
+      background-image:
+        radial-gradient(circle at 8px 8px, var(--gold) 1.4px, transparent 1.6px),
+        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><g fill='none' stroke='%23e8c15f' stroke-width='1.1' opacity='0.55'><path d='M20 30 v40 M12 40 h16 M12 60 h16'/><circle cx='70' cy='40' r='10'/><path d='M70 50 v22 M62 62 l16 -12 M62 74 l16 -12'/><path d='M120 20 l14 20 l-14 20 l-14 -20 Z'/><path d='M170 30 q10 20 0 40 q-10 20 0 40'/><path d='M20 120 h30 M35 120 v30'/><path d='M90 110 h26 v26 h-26 Z M96 116 h14 v14 h-14 Z'/><path d='M150 100 c0 20 20 20 20 40 c0 20 -20 20 -20 40'/><path d='M200 120 l10 15 l-10 15 l-10 -15 Z'/><path d='M30 190 q20 -10 40 0 q20 10 40 0'/><path d='M160 190 v30 M150 200 h20'/></g></svg>");
+      background-size: 30px 30px, 240px 240px;
+    }
+
+    /* drifting dust motes */
+    .dust { position: absolute; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
+    .mote {
+      position: absolute;
+      width: 3px; height: 3px;
+      border-radius: 50%;
+      background: var(--gold-bright);
+      opacity: .35;
+      filter: blur(.3px);
+      animation: drift linear infinite;
+    }
+    @keyframes drift {
+      0%   { transform: translateY(0) translateX(0); opacity: 0; }
+      10%  { opacity: .5; }
+      90%  { opacity: .35; }
+      100% { transform: translateY(-120vh) translateX(30px); opacity: 0; }
+    }
+
+    /* torch glow columns */
+    .torch {
+      position: absolute;
+      top: -60px;
+      width: 220px;
+      height: 420px;
+      z-index: -1;
+      background: radial-gradient(ellipse at 50% 0%, rgba(233, 130, 40, .38), transparent 70%);
+      filter: blur(6px);
+      animation: flicker 4.5s ease-in-out infinite;
+    }
+    .torch.left { left: -40px; }
+    .torch.right { right: -40px; animation-delay: -2.1s; }
+    @keyframes flicker {
+      0%, 100% { opacity: .55; transform: scaleY(1); }
+      35% { opacity: .8; transform: scaleY(1.04); }
+      50% { opacity: .45; transform: scaleY(.97); }
+      75% { opacity: .7; transform: scaleY(1.02); }
+    }
+
+    .game-wrap { width: 100%; max-width: 1040px; margin: 0 auto; position: relative; }
+
+    /* ---------- Library portal badge ---------- */
+    .portal-badge {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      margin: 0 auto 18px;
+      width: fit-content;
+      padding: 7px 18px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,.28);
+      color: var(--turquoise-bright);
+      font-family: "Cinzel", serif;
+      font-size: .72rem;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      box-shadow: 0 0 18px rgba(47, 184, 172, .12), inset 0 0 0 1px rgba(0,0,0,.3);
+    }
+    .portal-badge svg { width: 15px; height: 15px; stroke: var(--gold-bright); }
+
+    /* ---------- Header ---------- */
+    .topline {
+      text-align: center;
+      padding-bottom: 22px;
+      margin-bottom: 32px;
+      border-bottom: 1px solid var(--line);
+      position: relative;
+    }
+
+    .topline::after {
+      content: "";
+      position: absolute;
+      bottom: -1px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--turquoise-bright);
+      letter-spacing: .32em;
+      font-family: "Cinzel", serif;
+      font-size: .7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .eyebrow::before, .eyebrow::after {
+      content: "𓋹";
+      color: var(--gold);
+      font-size: .85rem;
+      opacity: .8;
+    }
+
+    .main-title {
+      font-family: "Cinzel", serif;
+      font-weight: 900;
+      letter-spacing: .05em;
+      line-height: 1.05;
+      margin: 16px 0 12px;
+      font-size: clamp(2.1rem, 5vw, 3.4rem);
+      background: linear-gradient(180deg, var(--gold-bright) 10%, var(--gold) 45%, var(--bronze) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      text-shadow: 0 2px 24px rgba(233, 193, 95, .25);
+    }
+
+    .intro {
+      max-width: 560px;
+      margin: 0 auto;
+      line-height: 1.75;
+      color: var(--muted);
+      font-size: 1.12rem;
+    }
+
+    /* ---------- Layout ---------- */
+    .play-layout {
+      display: grid;
+      grid-template-columns: minmax(270px, 1fr) minmax(340px, 1.3fr);
+      gap: 26px;
+      align-items: start;
+    }
+
+    /* ---------- Artifact panels ---------- */
+    .control-panel, .arena-panel {
+      position: relative;
+      background:
+        linear-gradient(160deg, rgba(255,255,255,.03), transparent 40%),
+        var(--stone-panel);
+      border: 1px solid var(--line);
+      box-shadow:
+        0 24px 60px rgba(0, 0, 0, .45),
+        inset 0 0 0 1px rgba(0,0,0,.35),
+        inset 0 1px 0 rgba(255,255,255,.04);
+    }
+
+    .control-panel { border-radius: 6px; padding: 26px 24px; }
+    .arena-panel { border-radius: 6px; padding: 24px; }
+
+    /* engraved gold frame */
+    .control-panel::before, .arena-panel::before {
+      content: "";
+      position: absolute;
+      inset: 7px;
+      border: 1px solid var(--line);
+      border-radius: 3px;
+      pointer-events: none;
+    }
+
+    /* Egyptian corner ornaments */
+    .control-panel::after, .arena-panel::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        radial-gradient(circle at 14px 14px, transparent 5px, var(--gold) 5.6px, var(--gold) 6.4px, transparent 7px),
+        radial-gradient(circle at calc(100% - 14px) 14px, transparent 5px, var(--gold) 5.6px, var(--gold) 6.4px, transparent 7px),
+        radial-gradient(circle at 14px calc(100% - 14px), transparent 5px, var(--gold) 5.6px, var(--gold) 6.4px, transparent 7px),
+        radial-gradient(circle at calc(100% - 14px) calc(100% - 14px), transparent 5px, var(--gold) 5.6px, var(--gold) 6.4px, transparent 7px);
+      opacity: .55;
+    }
+
+    .section-heading {
+      margin: 0;
+      font-family: "Cinzel", serif;
+      font-weight: 700;
+      font-size: 1.35rem;
+      color: var(--gold-bright);
+      letter-spacing: .03em;
+    }
+
+    .section-copy {
+      margin: 9px 0 20px;
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.65;
+    }
+
+    /* ---------- Difficulty selector ---------- */
+    .difficulty-list { display: grid; gap: 11px; }
+
+    .difficulty-option {
+      position: relative;
+      display: block;
+      cursor: pointer;
+    }
+
+    .difficulty-option input {
+      position: absolute;
+      opacity: 0;
+      inset: 0;
+      cursor: pointer;
+    }
+
+    .difficulty-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 13px 16px;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      background: rgba(0,0,0,.18);
+      transition: .2s ease;
+      font-size: 1.05rem;
+    }
+
+    .difficulty-option input:checked + .difficulty-label {
+      border-color: var(--gold);
+      box-shadow: inset 0 0 0 1px var(--gold), 0 0 18px rgba(232, 193, 95, .18);
+      background: rgba(232, 193, 95, .08);
+      color: var(--gold-bright);
+    }
+
+    .difficulty-option:hover .difficulty-label {
+      border-color: rgba(232, 193, 95, .5);
+    }
+
+    .difficulty-option input:focus-visible + .difficulty-label,
+    .action-button:focus-visible,
+    .cell:focus-visible {
+      outline: 2px solid var(--turquoise-bright);
+      outline-offset: 3px;
+    }
+
+    .difficulty-mark {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--bronze);
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,.4);
+    }
+
+    .difficulty-option input:checked + .difficulty-label .difficulty-mark {
+      background: var(--gold-bright);
+      box-shadow: 0 0 12px var(--gold-bright);
+    }
+
+    /* ---------- Scores ---------- */
+    .score-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      border-top: 1px solid var(--line);
+      margin-top: 24px;
+      padding-top: 22px;
+    }
+
+    .score-card {
+      text-align: center;
+      padding: 13px 7px;
+      border-radius: 4px;
+      background: rgba(0,0,0,.2);
+      border: 1px solid var(--line);
+    }
+
+    .score-card span {
+      font-family: "Cinzel", serif;
+      letter-spacing: .08em;
+    }
+
+    .score-number {
+      display: block;
+      margin-top: 7px;
+      font-family: "Cinzel", serif;
+      font-size: 1.65rem;
+      line-height: 1;
+      font-weight: 700;
+      color: var(--gold-bright);
+      text-shadow: 0 0 14px rgba(232, 193, 95, .25);
+    }
+
+    /* ---------- Status ---------- */
+    .status-box {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      min-height: 56px;
+      padding: 13px 18px;
+      border-radius: 4px;
+      background: rgba(0,0,0,.28);
+      border: 1px solid var(--line);
+      margin-bottom: 20px;
+      font-size: 1.08rem;
+    }
+
+    .status-orb {
+      flex: 0 0 auto;
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: var(--gold);
+      box-shadow: 0 0 15px var(--gold);
+    }
+
+    /* ---------- Board (stone tablet) ---------- */
+    .board {
+      width: min(100%, 430px);
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      padding: 14px;
+      border-radius: 8px;
+      background: linear-gradient(160deg, #1a130c, #100b07);
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,.5), inset 0 2px 18px rgba(0,0,0,.6);
+      border: 1px solid var(--line);
+    }
+
+    .cell {
+      aspect-ratio: 1;
+      border: 1px solid rgba(232, 193, 95, .18);
+      border-radius: 5px;
+      background:
+        radial-gradient(circle at 30% 25%, rgba(255,255,255,.05), transparent 50%),
+        linear-gradient(160deg, #241a11, #150f0a);
+      box-shadow: inset 0 2px 6px rgba(0,0,0,.55), inset 0 -1px 0 rgba(255,255,255,.03);
+      color: var(--ink);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease;
+    }
+
+    .cell:hover:not(:disabled) {
+      transform: translateY(-2px);
+      border-color: rgba(232, 193, 95, .6);
+      box-shadow: inset 0 2px 6px rgba(0,0,0,.55), 0 0 16px rgba(232, 193, 95, .15);
+    }
+    .cell:disabled { cursor: default; }
+
+    .mark-icon {
+      width: 56%;
+      height: 56%;
+      animation: mark-in .28s ease;
+    }
+
+    .cell.x { color: var(--gold-bright); }
+    .cell.x .mark-icon { filter: drop-shadow(0 0 10px rgba(246, 221, 143, .6)) drop-shadow(0 0 22px rgba(246, 221, 143, .28)); }
+
+    .cell.o { color: var(--turquoise-bright); }
+    .cell.o .mark-icon { filter: drop-shadow(0 0 10px rgba(111, 224, 211, .6)) drop-shadow(0 0 22px rgba(111, 224, 211, .28)); }
+
+    @keyframes mark-in {
+      from { transform: scale(.55); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .cell.winner {
+      border-color: var(--gold-bright);
+      background:
+        radial-gradient(circle at 50% 50%, rgba(232, 193, 95, .16), transparent 70%),
+        linear-gradient(160deg, #241a11, #150f0a);
+      box-shadow: inset 0 2px 6px rgba(0,0,0,.4), 0 0 22px rgba(232, 193, 95, .3);
+    }
+
+    /* ---------- Buttons ---------- */
+    .action-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 22px; }
+
+    .action-button {
+      min-height: 49px;
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      border-radius: 4px;
+      border: 1px solid var(--line);
+      cursor: pointer;
+      font-family: "Cinzel", serif;
+      font-weight: 700;
+      font-size: .95rem;
+      letter-spacing: .04em;
+      transition: transform .16s ease, filter .16s ease, box-shadow .16s ease;
+      background: linear-gradient(180deg, var(--gold-bright), var(--gold) 55%, var(--bronze));
+      color: #1c1206;
+      box-shadow: 0 8px 20px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.4);
+    }
+    .action-button:hover { transform: translateY(-2px); filter: brightness(1.06); }
+
+    .action-button.secondary {
+      background: rgba(0,0,0,.2);
+      color: var(--sandstone);
+      border-color: var(--line);
+      box-shadow: none;
+    }
+    .action-button.secondary:hover {
+      border-color: var(--turquoise);
+      color: var(--turquoise-bright);
+    }
+
+    .hint {
+      margin: 18px 0 0;
+      text-align: center;
+      color: var(--muted);
+      line-height: 1.6;
+      font-size: .9rem;
+      font-style: italic;
+    }
+
+    @media (max-width: 720px) {
+      .game-shell { padding: 22px 12px 30px; }
+      .topline { margin-bottom: 24px; }
+      .play-layout { grid-template-columns: 1fr; }
+      .control-panel { order: 2; }
+      .arena-panel { order: 1; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .mote, .torch, .mark-icon { animation: none !important; }
+    }
+  </style>
+ </head>
+ <body>
+  <div class="game-shell">
+   <div class="torch left"></div>
+   <div class="torch right"></div>
+   <div class="dust" id="dust"></div>
+   <div class="game-wrap">
+    <div class="portal-badge"><i data-lucide="scroll-text"></i> بوابة ألعاب مكتبة الجامعة السحرية GU</div>
+    <header class="topline" aria-labelledby="game-title">
+     <div class="eyebrow">معبد الألعاب المصرية القديمة</div>
+     <h1 id="game-title" class="main-title">تحدي الفراعنة</h1>
+     <p class="intro">قف أمام لوح الحجر المقدس، احمل عنخ الفرعون الذهبي، وتحدَّ حارس المعبد صاحب عين حورس في مبارزة أزلية بين الحكمة والحظ.</p>
+    </header>
+    <main class="play-layout">
+     <aside class="control-panel" aria-labelledby="settings-heading">
+      <h2 id="settings-heading" class="section-heading">مستوى حارس المعبد</h2>
+      <p class="section-copy">اختر قوة الحارس الذكي — يمكنك تبديل المستوى في أي وقت قبل حركته التالية.</p>
+      <div class="difficulty-list" role="radiogroup" aria-label="مستوى الذكاء الاصطناعي">
+       <label class="difficulty-option">
+        <input type="radio" name="difficulty" value="easy">
+        <span class="difficulty-label"><span class="difficulty-mark" aria-hidden="true"></span>&nbsp; تلميذ الكهنة — حركات عشوائية</span>
+       </label>
+       <label class="difficulty-option">
+        <input type="radio" name="difficulty" value="medium" checked>
+        <span class="difficulty-label"><span class="difficulty-mark" aria-hidden="true"></span>&nbsp; كاهن المعبد — توازن حكيم</span>
+       </label>
+       <label class="difficulty-option">
+        <input type="radio" name="difficulty" value="hard">
+        <span class="difficulty-label"><span class="difficulty-mark" aria-hidden="true"></span>&nbsp; حارس الأبدية — لا يُهزم</span>
+       </label>
+      </div>
+      <section class="score-grid" aria-label="النتائج">
+       <div class="score-card"><span style="color: var(--gold-bright); font-weight: 700; font-size: .78rem;">روح الفرعون</span>
+        <strong id="player-score" class="score-number" aria-live="polite">0</strong>
+       </div>
+       <div class="score-card"><span style="color: var(--sandstone); font-weight: 700; font-size: .78rem;">تعادل</span>
+        <strong id="draw-score" class="score-number" aria-live="polite">0</strong>
+       </div>
+       <div class="score-card"><span style="color: var(--turquoise-bright); font-weight: 700; font-size: .78rem;">عين حورس</span>
+        <strong id="ai-score" class="score-number" aria-live="polite">0</strong>
+       </div>
+      </section>
+     </aside>
+     <section class="arena-panel" aria-label="ساحة اللعب">
+      <div class="status-box" aria-live="polite"><span id="status-orb" class="status-orb" aria-hidden="true"></span> <span id="game-status">دورك الآن — ضع عنخ الفرعون في إحدى الخانات</span>
+      </div>
+      <div id="board" class="board" role="grid" aria-label="لوح الحجر المقدس">
+       <button class="cell" type="button" data-index="0" role="gridcell" aria-label="الخانة 1: فارغة"></button>
+       <button class="cell" type="button" data-index="1" role="gridcell" aria-label="الخانة 2: فارغة"></button>
+       <button class="cell" type="button" data-index="2" role="gridcell" aria-label="الخانة 3: فارغة"></button>
+       <button class="cell" type="button" data-index="3" role="gridcell" aria-label="الخانة 4: فارغة"></button>
+       <button class="cell" type="button" data-index="4" role="gridcell" aria-label="الخانة 5: فارغة"></button>
+       <button class="cell" type="button" data-index="5" role="gridcell" aria-label="الخانة 6: فارغة"></button>
+       <button class="cell" type="button" data-index="6" role="gridcell" aria-label="الخانة 7: فارغة"></button>
+       <button class="cell" type="button" data-index="7" role="gridcell" aria-label="الخانة 8: فارغة"></button>
+       <button class="cell" type="button" data-index="8" role="gridcell" aria-label="الخانة 9: فارغة"></button>
+      </div>
+      <div class="action-row">
+       <button id="new-round" class="action-button" type="button">جولة جديدة</button>
+       <button id="reset-scores" class="action-button secondary" type="button">تصفير النتائج</button>
+      </div>
+      <p class="hint">أنت تحمل عنخ الفرعون الذهبي وتبدأ دائماً أولاً، بينما يحرس الحارس المعبد بعين حورس التركوازية.</p>
+     </section>
+    </main>
+   </div>
+  </div>
+  <script>
+    // ---- decorative floating dust (visual only, no game logic) ----
+    (function () {
+      const container = document.getElementById("dust");
+      const count = window.innerWidth < 720 ? 16 : 28;
+      for (let i = 0; i < count; i++) {
+        const mote = document.createElement("span");
+        mote.className = "mote";
+        const left = Math.random() * 100;
+        const delay = Math.random() * 12;
+        const duration = 10 + Math.random() * 10;
+        const size = 1.5 + Math.random() * 2.5;
+        mote.style.left = left + "%";
+        mote.style.bottom = "-10px";
+        mote.style.width = size + "px";
+        mote.style.height = size + "px";
+        mote.style.animationDuration = duration + "s";
+        mote.style.animationDelay = "-" + delay + "s";
+        container.appendChild(mote);
+      }
+    })();
+
+    // ---- Egyptian mark icons (replace plain X / O glyphs) ----
+    // Internal game state still uses "X" and "O" strings so all game logic
+    // below (minimax, win checks, scoring) is completely unchanged.
+    const PHARAOH_ANKH_ICON = `
+      <svg class="mark-icon" viewBox="0 0 100 100" role="img" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+        <path fill="currentColor" d="M50 6C35 6 24 17 24 30c0 11 8 20 18 23v4H29a6 6 0 000 12h13v27a8 8 0 0016 0V69h13a6 6 0 000-12H58v-4c10-3 18-12 18-23C76 17 65 6 50 6zm0 11c9 0 17 6 17 13s-8 13-17 13-17-6-17-13 8-13 17-13z"/>
+      </svg>`;
+    const GUARDIAN_EYE_ICON = `
+      <svg class="mark-icon" viewBox="0 0 100 100" role="img" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+        <path fill="none" stroke="currentColor" stroke-width="6" stroke-linejoin="round" d="M6 46c0 0 21-25 44-25s44 25 44 25-21 25-44 25S6 46 6 46z"/>
+        <circle cx="50" cy="46" r="11" fill="currentColor"/>
+        <path fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" d="M50 21V6"/>
+        <path fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" d="M66 33l11-11"/>
+        <path fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" d="M37 59c-4 9-4 20 3 29"/>
+        <path fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" d="M18 46c-7 2-11 7-13 14"/>
+      </svg>`;
+
+    function markIcon(mark) {
+      if (mark === "X") return PHARAOH_ANKH_ICON;
+      if (mark === "O") return GUARDIAN_EYE_ICON;
+      return "";
+    }
+
+    function markName(mark) {
+      if (mark === "X") return "عنخ الفرعون";
+      if (mark === "O") return "عين حورس";
+      return "فارغة";
+    }
+
+    const cells = [...document.querySelectorAll(".cell")];
+    const status = document.getElementById("game-status");
+    const statusOrb = document.getElementById("status-orb");
+    const scoreEls = {
+      player: document.getElementById("player-score"),
+      draw: document.getElementById("draw-score"),
+      ai: document.getElementById("ai-score")
+    };
+
+    const winningLines = [
+      [0, 1, 2], [3, 4, 5], [6, 7, 8],
+      [0, 3, 6], [1, 4, 7], [2, 5, 8],
+      [0, 4, 8], [2, 4, 6]
+    ];
+
+    let board = Array(9).fill("");
+    let scores = { player: 0, draw: 0, ai: 0 };
+    let active = true;
+    let aiThinking = false;
+
+    function currentDifficulty() {
+      return document.querySelector('input[name="difficulty"]:checked').value;
+    }
+
+    function setStatus(message, color) {
+      status.textContent = message;
+      statusOrb.style.background = color;
+      statusOrb.style.boxShadow = `0 0 15px ${color}`;
+    }
+
+    function renderBoard() {
+      cells.forEach((cell, index) => {
+        const mark = board[index];
+        cell.innerHTML = markIcon(mark);
+        cell.disabled = Boolean(mark) || !active || aiThinking;
+        cell.classList.toggle("x", mark === "X");
+        cell.classList.toggle("o", mark === "O");
+        cell.classList.remove("winner");
+        cell.setAttribute("aria-label", `الخانة ${index + 1}: ${markName(mark)}`);
+      });
+    }
+
+    function checkResult(state) {
+      for (const line of winningLines) {
+        const [a, b, c] = line;
+        if (state[a] && state[a] === state[b] && state[a] === state[c]) {
+          return { winner: state[a], line };
+        }
+      }
+      return state.every(Boolean) ? { winner: "draw", line: [] } : null;
+    }
+
+    function finishRound(result) {
+      active = false;
+      if (result.winner === "X") {
+        scores.player++;
+        setStatus("أحسنت أيها الفرعون! لقد فزت بهذه الجولة.", "#f6dd8f");
+      } else if (result.winner === "O") {
+        scores.ai++;
+        setStatus("انتصرت عين حورس هذه المرة.", "#6fe0d3");
+      } else {
+        scores.draw++;
+        setStatus("تعادل — جولة متوازنة بين القوتين.", "#d8b98a");
+      }
+
+      result.line.forEach(index => cells[index].classList.add("winner"));
+      updateScores();
+      cells.forEach(cell => cell.disabled = true);
+    }
+
+    function updateScores() {
+      scoreEls.player.textContent = scores.player;
+      scoreEls.draw.textContent = scores.draw;
+      scoreEls.ai.textContent = scores.ai;
+    }
+
+    function emptyCells(state) {
+      return state.map((value, index) => value === "" ? index : null).filter(index => index !== null);
+    }
+
+    function randomMove(state) {
+      const available = emptyCells(state);
+      return available[Math.floor(Math.random() * available.length)];
+    }
+
+    function minimax(state, isMaximizing) {
+      const result = checkResult(state);
+      if (result) {
+        if (result.winner === "O") return 10;
+        if (result.winner === "X") return -10;
+        return 0;
+      }
+
+      if (isMaximizing) {
+        let best = -Infinity;
+        for (const index of emptyCells(state)) {
+          state[index] = "O";
+          best = Math.max(best, minimax(state, false));
+          state[index] = "";
+        }
+        return best;
+      }
+
+      let best = Infinity;
+      for (const index of emptyCells(state)) {
+        state[index] = "X";
+        best = Math.min(best, minimax(state, true));
+        state[index] = "";
+      }
+      return best;
+    }
+
+    function bestMove() {
+      let bestScore = -Infinity;
+      let move = null;
+      for (const index of emptyCells(board)) {
+        board[index] = "O";
+        const score = minimax(board, false);
+        board[index] = "";
+        if (score > bestScore) {
+          bestScore = score;
+          move = index;
+        }
+      }
+      return move;
+    }
+
+    function chooseAiMove() {
+      const difficulty = currentDifficulty();
+      if (difficulty === "easy") return randomMove(board);
+      if (difficulty === "medium") return Math.random() < 0.58 ? bestMove() : randomMove(board);
+      return bestMove();
+    }
+
+    function aiTurn() {
+      aiThinking = true;
+      renderBoard();
+      setStatus("حارس المعبد يفكر...", "#6fe0d3");
+
+      window.setTimeout(() => {
+        const move = chooseAiMove();
+        if (move !== undefined && move !== null) board[move] = "O";
+        aiThinking = false;
+        renderBoard();
+
+        const result = checkResult(board);
+        if (result) {
+          finishRound(result);
+        } else {
+          setStatus("دورك الآن — ضع عنخ الفرعون في إحدى الخانات", "#e8c15f");
+        }
+      }, 480);
+    }
+
+    function playerMove(index) {
+      if (!active || aiThinking || board[index]) return;
+      board[index] = "X";
+      renderBoard();
+
+      const result = checkResult(board);
+      if (result) {
+        finishRound(result);
+      } else {
+        aiTurn();
+      }
+    }
+
+    function startNewRound() {
+      board = Array(9).fill("");
+      active = true;
+      aiThinking = false;
+      renderBoard();
+      setStatus("دورك الآن — ضع عنخ الفرعون في إحدى الخانات", "#e8c15f");
+    }
+
+    cells.forEach(cell => {
+      cell.addEventListener("click", () => playerMove(Number(cell.dataset.index)));
+    });
+
+    document.getElementById("new-round").addEventListener("click", startNewRound);
+    document.getElementById("reset-scores").addEventListener("click", () => {
+      scores = { player: 0, draw: 0, ai: 0 };
+      updateScores();
+      startNewRound();
+    });
+
+    document.querySelectorAll('input[name="difficulty"]').forEach(input => {
+      input.addEventListener("change", () => {
+        if (active && !aiThinking) setStatus("تم تغيير المستوى — دورك الآن.", "#e8c15f");
+      });
+    });
+
+    if (window.lucide) lucide.createIcons();
+    renderBoard();
+  </script>
+ </body>
+</html>

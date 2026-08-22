@@ -1,0 +1,706 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>شطرنج المعبد الفرعوني</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@400;500;700&family=Cairo:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      /* ---------- Pharaonic palette ---------- */
+      --ink: #2a1c10;
+      --papyrus: #ecd8a8;
+      --stone-light: #d9b978;
+      --stone-dark: #6e4527;
+      --basalt: #171009;
+      --basalt-2: #241a10;
+      --gold: #e9b94a;
+      --gold-bright: #f6d374;
+      --gold-deep: #a8791f;
+      --lapis: #1f5a63;
+      --lapis-bright: #2f8a90;
+      --ochre: #a9432f;
+      --obsidian: #120d09;
+      --hiero-pattern: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='22' viewBox='0 0 60 22'><circle cx='9' cy='11' r='4.2' fill='none' stroke='%23e9b94a' stroke-width='2'/><rect x='24' y='4' width='3.4' height='14' fill='%23e9b94a'/><rect x='31' y='9' width='12' height='3.4' fill='%23e9b94a'/><polygon points='51,4 57,11 51,18 45,11' fill='none' stroke='%23e9b94a' stroke-width='2'/></svg>");
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: "Cairo", "DM Sans", sans-serif;
+      color: var(--papyrus);
+      margin: 0;
+      min-height: 100vh;
+      position: relative;
+      background:
+        radial-gradient(ellipse 60% 40% at 15% 0%, rgba(233, 185, 74, .16), transparent 60%),
+        radial-gradient(ellipse 60% 40% at 85% 0%, rgba(233, 185, 74, .16), transparent 60%),
+        radial-gradient(ellipse 90% 60% at 50% 100%, rgba(31, 90, 99, .22), transparent 65%),
+        linear-gradient(180deg, #1b130c 0%, #120d09 55%, #0c0805 100%);
+      overflow-x: hidden;
+    }
+
+    /* subtle carved stone-wall texture across the whole hall */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: .5;
+      background-image:
+        repeating-linear-gradient(90deg, rgba(255, 255, 255, .02) 0 2px, transparent 2px 140px),
+        repeating-linear-gradient(0deg, rgba(0, 0, 0, .18) 0 1px, transparent 1px 46px);
+      mix-blend-mode: overlay;
+      z-index: 0;
+    }
+
+    .app-shell { width: 100%; min-height: 100vh; position: relative; z-index: 1; }
+
+    .chess-title { font-family: "Reem Kufi", serif; letter-spacing: .02em; }
+
+    .hiero-strip {
+      height: 14px;
+      background-image: var(--hiero-pattern);
+      background-repeat: repeat-x;
+      background-size: 60px 14px;
+      opacity: .75;
+    }
+
+    /* ---------- Torches ---------- */
+    .torch {
+      position: absolute;
+      top: -6px;
+      width: 34px;
+      height: 34px;
+      pointer-events: none;
+      filter: drop-shadow(0 0 10px rgba(255, 170, 60, .55));
+      animation: flicker 2.6s ease-in-out infinite;
+    }
+    .torch.left { left: 10px; }
+    .torch.right { right: 10px; animation-delay: .8s; }
+
+    @keyframes flicker {
+      0%, 100% { transform: scale(1) rotate(-1deg); opacity: 1; }
+      25% { transform: scale(1.06) rotate(1deg); opacity: .9; }
+      50% { transform: scale(.96) rotate(-2deg); opacity: 1; }
+      75% { transform: scale(1.04) rotate(1.5deg); opacity: .85; }
+    }
+
+    /* ---------- Board ---------- */
+    .board-frame {
+      position: relative;
+      width: min(100%, 640px);
+      padding: clamp(14px, 2.4vw, 22px);
+      background:
+        radial-gradient(120% 140% at 50% 0%, rgba(233, 185, 74, .1), transparent 55%),
+        linear-gradient(160deg, #241a10, #150e08 65%);
+      border: 1px solid rgba(233, 185, 74, .35);
+      border-radius: 4px;
+      box-shadow:
+        0 30px 60px rgba(0, 0, 0, .55),
+        inset 0 0 0 2px var(--basalt),
+        inset 0 0 0 8px rgba(233, 185, 74, .12);
+    }
+
+    .board-frame::before,
+    .board-frame::after,
+    .board-frame .corner-tl,
+    .board-frame .corner-tr,
+    .board-frame .corner-bl,
+    .board-frame .corner-br {
+      content: "";
+      position: absolute;
+      width: 26px;
+      height: 26px;
+      border: 3px solid var(--gold);
+      opacity: .85;
+    }
+    .board-frame::before { top: 6px; left: 6px; border-width: 3px 0 0 3px; }
+    .board-frame::after { top: 6px; right: 6px; border-width: 3px 3px 0 0; }
+    .board-frame .corner-bl { bottom: 6px; left: 6px; border-width: 0 0 3px 3px; }
+    .board-frame .corner-br { bottom: 6px; right: 6px; border-width: 0 3px 3px 0; }
+
+    .board {
+      direction: ltr;
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      aspect-ratio: 1;
+      overflow: hidden;
+      border-radius: 2px;
+      border: 3px solid var(--gold-deep);
+      box-shadow: 0 0 0 1px var(--basalt), 0 18px 34px rgba(0, 0, 0, .5) inset;
+    }
+
+    .square {
+      position: relative;
+      min-width: 0;
+      border: 0;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      aspect-ratio: 1;
+      transition: filter .15s ease, transform .1s ease;
+    }
+
+    .square:active { transform: scale(0.96); }
+    .square:focus-visible { outline: 3px solid var(--gold-bright); outline-offset: -4px; z-index: 3; }
+    .square.light { background: linear-gradient(155deg, #e6cd94, #d3b06e); }
+    .square.dark { background: linear-gradient(155deg, #6b4326, #4a2c18); }
+    .square:hover { filter: brightness(1.1); }
+
+    .piece {
+      width: clamp(1.9rem, 6.4vw, 4rem);
+      height: clamp(1.9rem, 6.4vw, 4rem);
+      display: inline-block;
+      user-select: none;
+      pointer-events: none;
+      animation: pieceRise .22s ease both;
+      filter: drop-shadow(0 3px 2px rgba(0, 0, 0, .45));
+    }
+
+    @keyframes pieceRise {
+      from { opacity: 0; transform: scale(.72) translateY(4px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .piece.white { color: var(--gold-bright); }
+    .piece.white svg { filter: drop-shadow(0 1px 0 #7a5620); }
+    .piece.black { color: #241a12; }
+    .piece.black svg { filter: drop-shadow(0 1px 0 rgba(233, 185, 74, .55)) drop-shadow(0 2px 3px rgba(0, 0, 0, .5)); }
+
+    .selected::after {
+      content: "";
+      position: absolute;
+      inset: 5%;
+      border: 3px solid var(--gold-bright);
+      border-radius: 4px;
+      box-shadow: inset 0 0 0 1px rgba(42, 28, 16, .6), 0 0 12px rgba(246, 211, 116, .55);
+    }
+
+    .legal::before {
+      content: "";
+      width: 22%;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--lapis-bright), var(--lapis));
+      box-shadow: 0 0 0 3px rgba(236, 216, 168, .35), 0 0 10px rgba(47, 138, 144, .6);
+      position: absolute;
+      z-index: 2;
+    }
+
+    .legal.capture::before {
+      width: 80%;
+      background: transparent;
+      border: 4px solid var(--ochre);
+      box-shadow: 0 0 10px rgba(169, 67, 47, .65);
+    }
+
+    .last-move { box-shadow: inset 0 0 0 999px rgba(233, 185, 74, .22); }
+    .in-check { box-shadow: inset 0 0 0 999px rgba(169, 43, 33, .5); animation: checkPulse 1s ease-in-out infinite; }
+
+    @keyframes checkPulse {
+      50% { box-shadow: inset 0 0 0 999px rgba(169, 43, 33, .7); }
+    }
+
+    /* ---------- Panels ---------- */
+    .paper-card {
+      box-shadow: 0 18px 44px rgba(0, 0, 0, .45);
+      position: relative;
+      border: 1px solid rgba(233, 185, 74, .3);
+    }
+
+    .status-dot {
+      width: .6rem;
+      height: .6rem;
+      border-radius: 50%;
+      background: var(--lapis-bright);
+      box-shadow: 0 0 0 5px rgba(47, 138, 144, .18), 0 0 8px rgba(47, 138, 144, .6);
+      transition: background .2s ease;
+    }
+
+    .thinking .status-dot { background: var(--gold); animation: pulse 1s infinite; box-shadow: 0 0 0 5px rgba(233, 185, 74, .2), 0 0 10px rgba(233, 185, 74, .7); }
+
+    @keyframes pulse {
+      50% { transform: scale(.72); opacity: .55; }
+    }
+
+    .fade-in { animation: rise .6s ease both; }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(14px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    button { font-family: inherit; }
+
+    .ankh-btn:hover { box-shadow: 0 0 0 3px rgba(233, 185, 74, .3), 0 12px 22px rgba(0,0,0,.4); }
+
+    .pillar {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 30px;
+      background: linear-gradient(90deg, #150e08, #382713 40%, #150e08);
+      border-inline: 1px solid rgba(233, 185, 74, .25);
+      display: none;
+    }
+    .pillar.left { left: -46px; }
+    .pillar.right { right: -46px; }
+
+    @media (min-width: 1180px) {
+      .board-wrap { position: relative; }
+      .pillar { display: block; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell px-4 py-5 sm:px-7 sm:py-8">
+
+    <header class="mx-auto max-w-6xl fade-in relative">
+      <svg class="torch left" viewBox="0 0 40 40"><rect x="16" y="18" width="8" height="20" rx="2" fill="#7a5620"/><path d="M20 2 Q28 10 24 18 Q20 22 16 18 Q12 10 20 2Z" fill="#f6d374"/><path d="M20 6 Q25 12 22 17 Q20 19 18 17 Q15 12 20 6Z" fill="#e9622c"/></svg>
+      <svg class="torch right" viewBox="0 0 40 40"><rect x="16" y="18" width="8" height="20" rx="2" fill="#7a5620"/><path d="M20 2 Q28 10 24 18 Q20 22 16 18 Q12 10 20 2Z" fill="#f6d374"/><path d="M20 6 Q25 12 22 17 Q20 19 18 17 Q15 12 20 6Z" fill="#e9622c"/></svg>
+
+      <div class="hiero-strip rounded-t-md"></div>
+      <div class="px-5 py-5 sm:px-7 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+           style="background: linear-gradient(115deg, #241a10, #3a2312); border-inline: 1px solid rgba(233,185,74,.3);">
+        <div>
+          <p class="mb-1 text-sm font-bold tracking-[.22em]" style="color:var(--gold);">صالة اللعب الملكية</p>
+          <h1 class="chess-title font-bold text-3xl" style="color:var(--gold-bright); text-shadow: 0 0 18px rgba(233,185,74,.35);">شطرنج المعبد الفرعوني</h1>
+        </div>
+        <div class="self-start sm:self-auto rounded-md px-4 py-2 text-sm font-semibold"
+             style="background:linear-gradient(160deg,#f6d374,#c9971f); color:#2a1c10; border:1px solid rgba(0,0,0,.25);">
+          <span aria-hidden="true">𓋹</span>
+          <span id="playerBadgeText">أنت تلعب بالأبيض</span>
+        </div>
+      </div>
+      <div class="hiero-strip rounded-b-md"></div>
+    </header>
+
+    <main class="mx-auto mt-6 grid max-w-6xl items-start gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
+
+      <section class="fade-in board-wrap relative" style="animation-delay:.1s" aria-label="لوحة الشطرنج">
+        <div class="pillar left" aria-hidden="true"></div>
+        <div class="pillar right" aria-hidden="true"></div>
+
+        <div class="board-frame mx-auto">
+          <span class="corner-bl" aria-hidden="true"></span>
+          <span class="corner-br" aria-hidden="true"></span>
+          <div id="board" class="board" role="grid" aria-label="رقعة الشطرنج"></div>
+        </div>
+
+        <div id="statusPanel" class="mx-auto mt-4 flex w-full max-w-[640px] items-center gap-3 rounded-md px-4 py-3"
+             style="background:linear-gradient(120deg,#241a10,#1b130c); border:1px solid rgba(233,185,74,.3); color:var(--papyrus);">
+          <span class="status-dot" aria-hidden="true"></span>
+          <p id="gameStatus" class="text-sm font-semibold sm:text-base" aria-live="polite"></p>
+        </div>
+
+        <div class="mx-auto mt-4 flex w-full max-w-[640px] justify-center">
+          <button id="newGame" type="button"
+                  class="ankh-btn inline-flex items-center gap-2 rounded-md px-5 py-3 font-bold transition hover:-translate-y-0.5 focus:outline-none focus:ring-4"
+                  style="background:linear-gradient(160deg,#f6d374,#a8791f); color:#2a1c10; border:1px solid rgba(0,0,0,.3);">
+            <i data-lucide="rotate-ccw" width="18" height="18" aria-hidden="true"></i>
+            <span>مباراة جديدة</span>
+          </button>
+        </div>
+      </section>
+
+      <aside class="fade-in space-y-4" style="animation-delay:.18s" aria-label="معلومات اللعبة">
+
+        <section class="paper-card rounded-md p-5" style="background:linear-gradient(160deg,#241a10,#1b130c);">
+          <div class="mb-4 flex items-center gap-3">
+            <span class="grid h-10 w-10 place-items-center rounded-full" style="background:linear-gradient(160deg,#f6d374,#a8791f); color:#2a1c10;" aria-hidden="true">
+              <i data-lucide="mouse-pointer-click" width="19" height="19"></i>
+            </span>
+            <h2 class="chess-title font-bold text-2xl" style="color:var(--gold-bright);">كيف تلعب؟</h2>
+          </div>
+          <ol class="space-y-3 text-sm leading-6">
+            <li class="flex gap-3"><span class="font-bold" style="color:var(--gold);">01</span><span style="color:var(--papyrus);">اختر قطعة بيضاء من الرقعة.</span></li>
+            <li class="flex gap-3"><span class="font-bold" style="color:var(--gold);">02</span><span style="color:var(--papyrus);">اضغط على الدائرة اللازوردية لإتمام نقلة قانونية.</span></li>
+            <li class="flex gap-3"><span class="font-bold" style="color:var(--gold);">03</span><span style="color:var(--papyrus);">انتظر رد الخصم الذكي ثم تابع خطتك.</span></li>
+          </ol>
+        </section>
+
+        <section class="paper-card rounded-md p-5" style="background:linear-gradient(160deg,#2a1c10,#1b130c);">
+          <div class="flex items-center gap-3">
+            <span class="grid h-10 w-10 place-items-center rounded-full" style="background:#120d09; color:var(--gold-bright); border:1px solid var(--gold-deep);" aria-hidden="true">
+              <i data-lucide="bot" width="20" height="20"></i>
+            </span>
+            <div>
+              <p class="text-sm font-bold" style="color:var(--gold);">خصمك</p>
+              <h2 class="chess-title font-bold text-2xl" style="color:var(--gold-bright);">حارس المعبد الآلي</h2>
+            </div>
+          </div>
+          <div class="mt-4 inline-block rounded-full px-3 py-1 text-xs font-bold" style="background:#120d09; color:var(--gold-bright); border:1px solid var(--gold-deep);">
+            مستوى: متوازن
+          </div>
+        </section>
+
+        <div class="hiero-strip rounded"></div>
+        <p class="px-2 text-center text-xs leading-5" style="color:var(--stone-light); font-style:italic;">
+          الهدف: حماية ملكك، والسيطرة على الرقعة، وتحقيق كش مات.
+        </p>
+      </aside>
+    </main>
+  </div>
+
+  <script>
+    "use strict";
+
+    /* ---------- Constants ---------- */
+    const ICONS = {
+      w: { k: "♔", q: "♕", r: "♖", b: "♗", n: "♘", p: "♙" },
+      b: { k: "♚", q: "♛", r: "♜", b: "♝", n: "♞", p: "♟" }
+    };
+
+    /* Pharaonic statuette artwork for each piece — visual layer only, does not
+       affect move generation, AI, or game rules (those still use piece codes
+       k/q/r/b/n/p exactly as before). */
+    const PIECE_SVG = {
+      k: '<svg viewBox="0 0 100 100" fill="currentColor"><path d="M35 55 Q30 25 50 10 Q70 25 65 55 Z"/><path d="M25 55 Q20 70 30 85 L70 85 Q80 70 75 55 Q50 65 25 55 Z"/><circle cx="50" cy="20" r="5"/></svg>',
+      q: '<svg viewBox="0 0 100 100" fill="currentColor"><path d="M50 14 L58 30 L50 25 L42 30 Z"/><path d="M15 34 Q35 24 50 31 Q65 24 85 34 Q65 39 50 37 Q35 39 15 34 Z"/><circle cx="50" cy="55" r="12" fill="none" stroke="currentColor" stroke-width="7"/><rect x="45" y="66" width="10" height="22" /><rect x="34" y="80" width="32" height="8"/></svg>',
+      r: '<svg viewBox="0 0 100 100" fill="currentColor"><polygon points="50,8 63,30 37,30"/><rect x="40" y="30" width="20" height="46"/><rect x="27" y="76" width="46" height="12"/></svg>',
+      b: '<svg viewBox="0 0 100 100" fill="currentColor"><path d="M30 72 Q24 42 44 26 L39 10 L55 25 Q76 34 76 55 L84 60 L71 65 Q69 79 55 83 Q61 89 55 93 L34 89 Q40 81 33 76 Z"/></svg>',
+      n: '<svg viewBox="0 0 100 100" fill="currentColor"><path d="M35 87 Q24 60 35 40 Q29 24 46 14 Q61 8 63 24 L77 21 L69 35 Q80 40 76 56 L84 59 L71 64 Q66 81 54 87 Z"/><rect x="40" y="10" width="6" height="14"/></svg>',
+      p: '<svg viewBox="0 0 100 100" fill="currentColor"><circle cx="50" cy="28" r="16" fill="none" stroke="currentColor" stroke-width="9"/><rect x="43" y="42" width="14" height="40"/><rect x="28" y="55" width="44" height="10"/></svg>'
+    };
+    const VALUES = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000 };
+    const AI_MOVE_DELAY_MS = 420;
+
+    /* ---------- Game state ---------- */
+    let board, turn, selected, legalMoves, gameOver, thinking, lastMove, castling;
+
+    /* ---------- Setup ---------- */
+    function freshBoard() {
+      return [
+        [{ c: "b", t: "r" }, { c: "b", t: "n" }, { c: "b", t: "b" }, { c: "b", t: "q" }, { c: "b", t: "k" }, { c: "b", t: "b" }, { c: "b", t: "n" }, { c: "b", t: "r" }],
+        Array.from({ length: 8 }, () => ({ c: "b", t: "p" })),
+        ...Array.from({ length: 4 }, () => Array(8).fill(null)),
+        Array.from({ length: 8 }, () => ({ c: "w", t: "p" })),
+        [{ c: "w", t: "r" }, { c: "w", t: "n" }, { c: "w", t: "b" }, { c: "w", t: "q" }, { c: "w", t: "k" }, { c: "w", t: "b" }, { c: "w", t: "n" }, { c: "w", t: "r" }]
+      ];
+    }
+
+    function resetGame() {
+      board = freshBoard();
+      turn = "w";
+      selected = null;
+      legalMoves = [];
+      gameOver = false;
+      thinking = false;
+      lastMove = null;
+      castling = { wk: true, wq: true, bk: true, bq: true };
+      render();
+      updateStatus();
+    }
+
+    /* ---------- Board helpers ---------- */
+    const inside = (r, c) => r >= 0 && r < 8 && c >= 0 && c < 8;
+    const cloneState = (state) => state.map(row => row.map(p => p ? { ...p } : null));
+
+    function findKing(state, color) {
+      for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+          if (state[r][c]?.c === color && state[r][c]?.t === "k") return [r, c];
+        }
+      }
+      return null;
+    }
+
+    function attacked(state, r, c, byColor) {
+      const pawnDir = byColor === "w" ? -1 : 1;
+      for (const dc of [-1, 1]) {
+        const pr = r - pawnDir, pc = c - dc;
+        if (inside(pr, pc) && state[pr][pc]?.c === byColor && state[pr][pc]?.t === "p") return true;
+      }
+      for (const [dr, dc] of [[-2, -1], [-2, 1], [-1, -2], [-1, 2], [1, -2], [1, 2], [2, -1], [2, 1]]) {
+        const rr = r + dr, cc = c + dc;
+        if (inside(rr, cc) && state[rr][cc]?.c === byColor && state[rr][cc]?.t === "n") return true;
+      }
+      for (const [dr, dc] of [[-1, -1], [-1, 1], [1, -1], [1, 1]]) {
+        let rr = r + dr, cc = c + dc;
+        while (inside(rr, cc)) {
+          const p = state[rr][cc];
+          if (p) { if (p.c === byColor && (p.t === "b" || p.t === "q")) return true; break; }
+          rr += dr; cc += dc;
+        }
+      }
+      for (const [dr, dc] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) {
+        let rr = r + dr, cc = c + dc;
+        while (inside(rr, cc)) {
+          const p = state[rr][cc];
+          if (p) { if (p.c === byColor && (p.t === "r" || p.t === "q")) return true; break; }
+          rr += dr; cc += dc;
+        }
+      }
+      for (let dr = -1; dr <= 1; dr++) {
+        for (let dc = -1; dc <= 1; dc++) {
+          if (dr || dc) {
+            const rr = r + dr, cc = c + dc;
+            if (inside(rr, cc) && state[rr][cc]?.c === byColor && state[rr][cc]?.t === "k") return true;
+          }
+        }
+      }
+      return false;
+    }
+
+    function inCheck(state, color) {
+      const king = findKing(state, color);
+      return king ? attacked(state, king[0], king[1], color === "w" ? "b" : "w") : true;
+    }
+
+    function pseudoMoves(state, r, c, includeCastle = true) {
+      const p = state[r][c];
+      if (!p) return [];
+      const moves = [];
+      const enemy = p.c === "w" ? "b" : "w";
+      const add = (rr, cc, extra = {}) => {
+        if (inside(rr, cc) && (!state[rr][cc] || state[rr][cc].c !== p.c)) moves.push({ from: [r, c], to: [rr, cc], ...extra });
+      };
+
+      if (p.t === "p") {
+        const d = p.c === "w" ? -1 : 1, start = p.c === "w" ? 6 : 1;
+        if (inside(r + d, c) && !state[r + d][c]) {
+          add(r + d, c);
+          if (r === start && !state[r + 2 * d][c]) add(r + 2 * d, c);
+        }
+        [-1, 1].forEach(dc => {
+          if (inside(r + d, c + dc) && state[r + d][c + dc]?.c === enemy) add(r + d, c + dc);
+        });
+      } else if (p.t === "n") {
+        [[-2, -1], [-2, 1], [-1, -2], [-1, 2], [1, -2], [1, 2], [2, -1], [2, 1]].forEach(([dr, dc]) => add(r + dr, c + dc));
+      } else if (["b", "r", "q"].includes(p.t)) {
+        const dirs = p.t === "b"
+          ? [[-1, -1], [-1, 1], [1, -1], [1, 1]]
+          : p.t === "r"
+            ? [[-1, 0], [1, 0], [0, -1], [0, 1]]
+            : [[-1, -1], [-1, 1], [1, -1], [1, 1], [-1, 0], [1, 0], [0, -1], [0, 1]];
+        dirs.forEach(([dr, dc]) => {
+          let rr = r + dr, cc = c + dc;
+          while (inside(rr, cc)) {
+            if (!state[rr][cc]) { add(rr, cc); }
+            else { if (state[rr][cc].c !== p.c) add(rr, cc); break; }
+            rr += dr; cc += dc;
+          }
+        });
+      } else if (p.t === "k") {
+        for (let dr = -1; dr <= 1; dr++) {
+          for (let dc = -1; dc <= 1; dc++) {
+            if (dr || dc) add(r + dr, c + dc);
+          }
+        }
+        if (includeCastle && !inCheck(state, p.c)) {
+          const home = p.c === "w" ? 7 : 0, key = p.c === "w" ? "w" : "b";
+          if (r === home && c === 4 && castling[key + "k"] && !state[home][5] && !state[home][6] &&
+              state[home][7]?.t === "r" && !attacked(state, home, 5, enemy) && !attacked(state, home, 6, enemy)) {
+            moves.push({ from: [r, c], to: [home, 6], castle: "k" });
+          }
+          if (r === home && c === 4 && castling[key + "q"] && !state[home][1] && !state[home][2] && !state[home][3] &&
+              state[home][0]?.t === "r" && !attacked(state, home, 3, enemy) && !attacked(state, home, 2, enemy)) {
+            moves.push({ from: [r, c], to: [home, 2], castle: "q" });
+          }
+        }
+      }
+      return moves;
+    }
+
+    function applyMove(state, m) {
+      const next = cloneState(state);
+      const piece = next[m.from[0]][m.from[1]];
+      next[m.to[0]][m.to[1]] = piece;
+      next[m.from[0]][m.from[1]] = null;
+      if (piece.t === "p" && (m.to[0] === 0 || m.to[0] === 7)) piece.t = "q";
+      if (m.castle === "k") { next[m.from[0]][5] = next[m.from[0]][7]; next[m.from[0]][7] = null; }
+      if (m.castle === "q") { next[m.from[0]][3] = next[m.from[0]][0]; next[m.from[0]][0] = null; }
+      return next;
+    }
+
+    function legalFor(state, color) {
+      const out = [];
+      for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+          if (state[r][c]?.c === color) {
+            pseudoMoves(state, r, c).forEach(m => {
+              if (!inCheck(applyMove(state, m), color)) out.push(m);
+            });
+          }
+        }
+      }
+      return out;
+    }
+
+    function updateCastlingRights(m, stateBefore) {
+      const p = stateBefore[m.from[0]][m.from[1]];
+      const target = stateBefore[m.to[0]][m.to[1]];
+      if (p.t === "k") {
+        if (p.c === "w") { castling.wk = false; castling.wq = false; }
+        else { castling.bk = false; castling.bq = false; }
+      }
+      if (p.t === "r") {
+        if (m.from[0] === 7 && m.from[1] === 0) castling.wq = false;
+        if (m.from[0] === 7 && m.from[1] === 7) castling.wk = false;
+        if (m.from[0] === 0 && m.from[1] === 0) castling.bq = false;
+        if (m.from[0] === 0 && m.from[1] === 7) castling.bk = false;
+      }
+      if (target?.t === "r") {
+        if (m.to[0] === 7 && m.to[1] === 0) castling.wq = false;
+        if (m.to[0] === 7 && m.to[1] === 7) castling.wk = false;
+        if (m.to[0] === 0 && m.to[1] === 0) castling.bq = false;
+        if (m.to[0] === 0 && m.to[1] === 7) castling.bk = false;
+      }
+    }
+
+    /* ---------- AI ---------- */
+    function evaluate(state) {
+      let score = 0;
+      for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+          const p = state[r][c];
+          if (p) score += (p.c === "b" ? 1 : -1) * VALUES[p.t] + (p.c === "b" ? r : 7 - r) * 2;
+        }
+      }
+      return score;
+    }
+
+    function bestMove() {
+      const moves = legalFor(board, "b");
+      let best = null, bestScore = -Infinity;
+      for (const m of moves) {
+        const next = applyMove(board, m);
+        const replies = legalFor(next, "w");
+        let score;
+        if (!replies.length) {
+          score = inCheck(next, "w") ? 999999 : evaluate(next);
+        } else {
+          score = Math.min(...replies.map(reply => evaluate(applyMove(next, reply))));
+        }
+        score += Math.random() * 12;
+        if (score > bestScore) { bestScore = score; best = m; }
+      }
+      return best;
+    }
+
+    /* ---------- Turn flow ---------- */
+    function makeMove(m) {
+      const before = board;
+      updateCastlingRights(m, before);
+      board = applyMove(board, m);
+      lastMove = m;
+      selected = null;
+      legalMoves = [];
+      turn = turn === "w" ? "b" : "w";
+      render();
+      updateStatus();
+    }
+
+    function triggerAiTurn() {
+      thinking = true;
+      updateStatus();
+      setTimeout(() => {
+        const ai = bestMove();
+        thinking = false;
+        if (ai) makeMove(ai);
+        else updateStatus();
+      }, AI_MOVE_DELAY_MS);
+    }
+
+    function clickSquare(r, c) {
+      if (gameOver || thinking || turn !== "w") return;
+      const p = board[r][c];
+      const move = legalMoves.find(m => m.to[0] === r && m.to[1] === c);
+
+      if (move) {
+        makeMove(move);
+        if (!gameOver) triggerAiTurn();
+        return;
+      }
+
+      if (p?.c === "w") {
+        selected = [r, c];
+        legalMoves = legalFor(board, "w").filter(m => m.from[0] === r && m.from[1] === c);
+        render();
+      } else {
+        selected = null;
+        legalMoves = [];
+        render();
+      }
+    }
+
+    /* ---------- Rendering ---------- */
+    function updateStatus() {
+      const el = document.getElementById("gameStatus");
+      const panel = document.getElementById("statusPanel");
+      const moves = legalFor(board, turn);
+
+      if (!moves.length) {
+        gameOver = true;
+        panel.classList.remove("thinking");
+        el.textContent = inCheck(board, turn)
+          ? (turn === "w" ? "كش مات — انتصر حارس المعبد." : "كش مات — أحسنت، لقد فزت!")
+          : "تعادل — لا توجد نقلات قانونية.";
+        return;
+      }
+
+      if (thinking) {
+        panel.classList.add("thinking");
+        el.textContent = "حارس المعبد يتأمل نقلته…";
+        return;
+      }
+
+      panel.classList.remove("thinking");
+      el.textContent = inCheck(board, turn)
+        ? (turn === "w" ? "أنت في وضع الشاه — أنقذ ملكك." : "الخصم في وضع الشاه.")
+        : (turn === "w" ? "دورك — حرّك القطع البيضاء." : "دور حارس المعبد.");
+    }
+
+    function render() {
+      const root = document.getElementById("board");
+      const fragment = document.createDocumentFragment();
+
+      for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+          const sq = document.createElement("button");
+          const p = board[r][c];
+          const coord = String.fromCharCode(97 + c) + (8 - r);
+
+          sq.type = "button";
+          sq.className = `square ${(r + c) % 2 ? "dark" : "light"}`;
+          sq.setAttribute("role", "gridcell");
+          sq.setAttribute("aria-label", p ? `${coord}: ${p.c === "w" ? "قطعة بيضاء" : "قطعة سوداء"}` : `${coord}: خانة فارغة`);
+
+          if (selected && selected[0] === r && selected[1] === c) sq.classList.add("selected");
+          if (lastMove && ((lastMove.from[0] === r && lastMove.from[1] === c) || (lastMove.to[0] === r && lastMove.to[1] === c))) {
+            sq.classList.add("last-move");
+          }
+          if (p?.t === "k" && inCheck(board, p.c)) sq.classList.add("in-check");
+
+          const lm = legalMoves.find(m => m.to[0] === r && m.to[1] === c);
+          if (lm) {
+            sq.classList.add("legal");
+            if (p) sq.classList.add("capture");
+          }
+
+          if (p) {
+            const span = document.createElement("span");
+            span.className = `piece ${p.c === "w" ? "white" : "black"}`;
+            span.innerHTML = PIECE_SVG[p.t];
+            sq.appendChild(span);
+          }
+
+          sq.addEventListener("click", () => clickSquare(r, c));
+          fragment.appendChild(sq);
+        }
+      }
+
+      root.innerHTML = "";
+      root.appendChild(fragment);
+    }
+
+    /* ---------- Init ---------- */
+    document.getElementById("newGame").addEventListener("click", resetGame);
+    if (window.lucide) lucide.createIcons();
+    resetGame();
+  </script>
+</body>
+</html>

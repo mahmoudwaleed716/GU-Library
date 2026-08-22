@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pharaoh's Run: Journey Through the Temple of Knowledge</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+        body {
+            background-color: #0b0914;
+            color: #f4e8c1;
+            font-family: 'Cinzel', 'Trajan Pro', 'Georgia', serif, sans-serif;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            max-width: 1280px;
+            max-height: 720px;
+            aspect-ratio: 16 / 9;
+            overflow: hidden;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.9), inset 0 0 30px rgba(212, 175, 55, 0.15);
+            border: 2px solid #3d2c16;
+            background: #1a1005;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* UI Overlay Elements */
+        .ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20px;
+            z-index: 10;
+        }
+
+        .hud-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            width: 100%;
+        }
+
+        .hud-box {
+            background: rgba(15, 11, 5, 0.75);
+            border: 2px solid #d4af37;
+            padding: 10px 20px;
+            border-radius: 4px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5), inset 0 0 10px rgba(212,175,55,0.2);
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .hud-label {
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: #c5a059;
+            text-transform: uppercase;
+        }
+
+        .hud-value {
+            font-size: 22px;
+            font-weight: bold;
+            color: #fff8e8;
+            font-family: monospace;
+            letter-spacing: 1px;
+            text-shadow: 0 0 8px rgba(212,175,55,0.6);
+        }
+
+        /* Screens (Start / Game Over) */
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, rgba(30, 20, 8, 0.92) 0%, rgba(8, 5, 2, 0.96) 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            pointer-events: auto;
+            transition: opacity 0.4s ease;
+        }
+
+        .screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .ornate-frame {
+            border: 3px solid #d4af37;
+            padding: 40px 60px;
+            background: linear-gradient(135deg, rgba(20, 14, 6, 0.95), rgba(40, 28, 12, 0.95));
+            box-shadow: 0 0 40px rgba(212, 175, 55, 0.3), inset 0 0 20px rgba(212, 175, 55, 0.1);
+            text-align: center;
+            position: relative;
+            max-width: 650px;
+            width: 90%;
+            border-radius: 8px;
+        }
+
+        .ornate-frame::before, .ornate-frame::after {
+            content: '❖';
+            position: absolute;
+            color: #d4af37;
+            font-size: 20px;
+        }
+        .ornate-frame::before { top: 10px; left: 10px; }
+        .ornate-frame::after { top: 10px; right: 10px; }
+
+        h1 {
+            font-size: 42px;
+            color: #f4e8c1;
+            letter-spacing: 4px;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 10px rgba(212, 175, 55, 0.6);
+            border-bottom: 2px solid #d4af37;
+            padding-bottom: 15px;
+        }
+
+        .subtitle {
+            font-size: 13px;
+            color: #c5a059;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-bottom: 30px;
+        }
+
+        .stats-summary {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(10, 7, 3, 0.6);
+            border: 1px solid #7c6229;
+            padding: 12px;
+            border-radius: 4px;
+        }
+
+        .btn-pharaoh {
+            background: linear-gradient(to bottom, #d4af37, #997515);
+            color: #1a1005;
+            border: 2px solid #ffdf73;
+            padding: 14px 35px;
+            font-size: 16px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            cursor: pointer;
+            border-radius: 4px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            font-family: inherit;
+            margin: 5px;
+        }
+
+        .btn-pharaoh:hover {
+            background: linear-gradient(to bottom, #ffdf73, #d4af37);
+            transform: translateY(-2px);
+            box-shadow: 0 7px 20px rgba(212, 175, 55, 0.5);
+        }
+
+        .btn-pharaoh:active {
+            transform: translateY(1px);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .controls-hint {
+            margin-top: 20px;
+            font-size: 11px;
+            color: #9a8459;
+            letter-spacing: 1px;
+            line-height: 1.6;
+        }
+
+        /* Responsive Mobile Touch Indicator */
+        .mobile-controls {
+            display: none;
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            width: 100%;
+            justify-content: space-between;
+            padding: 0 30px;
+            pointer-events: auto;
+            z-index: 5;
+        }
+
+        .touch-btn {
+            width: 80px;
+            height: 80px;
+            background: rgba(212, 175, 55, 0.2);
+            border: 2px solid #d4af37;
+            border-radius: 50%;
+            color: #f4e8c1;
+            font-size: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(4px);
+            outline: none;
+        }
+
+        @media (max-width: 900px) {
+            .mobile-controls { display: flex; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <!-- Main Game Canvas -->
+        <canvas id="gameCanvas"></canvas>
+
+        <!-- HUD Layer -->
+        <div class="ui-layer">
+            <div class="hud-top">
+                <div class="hud-box">
+                    <span class="hud-label">Score</span>
+                    <span class="hud-value" id="hud-score">0000000</span>
+                </div>
+                <div class="hud-box">
+                    <span class="hud-label">Level</span>
+                    <span class="hud-value" id="hud-level">001</span>
+                </div>
+                <div class="hud-box">
+                    <span class="hud-label">High Score</span>
+                    <span class="hud-value" id="hud-highscore">0000000</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Touch Controls -->
+        <div class="mobile-controls">
+            <button class="touch-btn" id="btn-crouch">⬇</button>
+            <button class="touch-btn" id="btn-jump">⬆</button>
+        </div>
+
+        <!-- Start Screen -->
+        <div id="start-screen" class="screen">
+            <div class="ornate-frame">
+                <h1>PHARAOH'S RUN</h1>
+                <div class="subtitle">Journey Through the Temple of Knowledge</div>
+                <p style="font-size: 13px; color: #d4af37; margin-bottom: 25px; line-height: 1.5;">
+                    The sacred Tomes and relics of ancient Kemet have awakened. Guide the royal mummy through endless corridors of trials and eternal wisdom.
+                </p>
+                <button class="btn-pharaoh" id="start-btn">Start Adventure</button>
+                <div class="controls-hint">
+                    Controls: SPACE / UP / MOUSE / SWIPE = Jump | DOWN / SWIPE = Crouch/Slide
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div id="gameover-screen" class="screen hidden">
+            <div class="ornate-frame">
+                <h1>JOURNEY ENDED</h1>
+                <div class="subtitle">Your soul has entered the eternal hall</div>
+                
+                <div class="stats-summary">
+                    <div class="stat-card">
+                        <div class="hud-label">Final Score</div>
+                        <div class="hud-value" id="go-score" style="font-size: 16px;">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="hud-label">High Score</div>
+                        <div class="hud-value" id="go-highscore" style="font-size: 16px;">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="hud-label">Reached Level</div>
+                        <div class="hud-value" id="go-level" style="font-size: 16px;">1</div>
+                    </div>
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn-pharaoh" id="restart-btn">Play Again</button>
+                    <button class="btn-pharaoh" id="menu-btn" style="background: linear-gradient(to bottom, #5a4515, #2a1f0a); color: #d4af37; border-color: #7c6229;">Back to Library</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * PHARAOH MUMMY RUNNER - SINGLE FILE ARCHITECTURE
+         * Optimized with advanced pattern-based obstacle spawning and fair dynamic difficulty.
+         */
+
+        // --- AUDIO SYSTEM (Web Audio API Synthesizer) ---
+        const AudioSystem = {
+            ctx: null,
+            init() {
+                if (!this.ctx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    this.ctx = new AudioContext();
+                }
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            },
+            playTone(freq, type, duration, vol = 0.1) {
+                try {
+                    this.init();
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = type;
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                    gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + duration);
+                } catch(e) {}
+            },
+            jump() { this.playTone(300, 'triangle', 0.15, 0.15); setTimeout(()=>this.playTone(450, 'triangle', 0.15, 0.1), 50); },
+            land() { this.playTone(120, 'sine', 0.1, 0.2); },
+            score() { this.playTone(880, 'sine', 0.08, 0.08); },
+            hit() { 
+                this.playTone(90, 'sawtooth', 0.4, 0.3); 
+                setTimeout(() => this.playTone(50, 'sawtooth', 0.5, 0.3), 100); 
+            },
+            button() { this.playTone(600, 'sine', 0.08, 0.1); }
+        };
+
+        // --- GAME STATE SYSTEM ---
+        const GameState = {
+            STATE_MENU: 0,
+            STATE_PLAYING: 1,
+            STATE_GAMEOVER: 2,
+            current: 0,
+            score: 0,
+            highScore: parseInt(localStorage.getItem('pharaoh_highscore') || '0', 10),
+            level: 1,
+            speed: 5,
+            maxSpeed: 13, // Smooth, manageable upper speed limit
+            timeOfDay: 0, // 0 to 1 cycle
+            canvas: null,
+            ctx: null,
+            width: 1280,
+            height: 720,
+            groundY: 580
+        };
+
+        // --- INPUT SYSTEM ---
+        const Input = {
+            keys: {},
+            init() {
+                window.addEventListener('keydown', e => {
+                    if (['Space', 'ArrowUp', 'ArrowDown', ' '].includes(e.key)) {
+                        e.preventDefault();
+                    }
+                    this.keys[e.code] = true;
+                    if (GameState.current === GameState.STATE_PLAYING) {
+                        if (e.code === 'Space' || e.code === 'ArrowUp') Player.jump();
+                        if (e.code === 'ArrowDown') Player.crouch(true);
+                    }
+                });
+
+                window.addEventListener('keyup', e => {
+                    this.keys[e.code] = false;
+                    if (e.code === 'ArrowDown') Player.crouch(false);
+                });
+
+                // Mouse & Touch support
+                const canvas = document.getElementById('gameCanvas');
+                canvas.addEventListener('mousedown', () => {
+                    if (GameState.current === GameState.STATE_PLAYING) Player.jump();
+                });
+
+                // Touch Swipe Mechanics
+                let touchStartY = 0;
+                window.addEventListener('touchstart', e => {
+                    touchStartY = e.touches[0].clientY;
+                }, {passive: true});
+
+                window.addEventListener('touchmove', e => {
+                    if (GameState.current !== GameState.STATE_PLAYING) return;
+                    let touchEndY = e.touches[0].clientY;
+                    let diff = touchEndY - touchStartY;
+                    if (diff < -30) {
+                        Player.jump();
+                        touchStartY = touchEndY;
+                    } else if (diff > 30) {
+                        Player.crouch(true);
+                    }
+                }, {passive: true});
+
+                window.addEventListener('touchend', () => {
+                    Player.crouch(false);
+                });
+
+                // UI buttons bindings
+                document.getElementById('start-btn').addEventListener('click', () => {
+                    AudioSystem.button();
+                    startGame();
+                });
+                document.getElementById('restart-btn').addEventListener('click', () => {
+                    AudioSystem.button();
+                    startGame();
+                });
+                document.getElementById('menu-btn').addEventListener('click', () => {
+                    AudioSystem.button();
+                    showMenu();
+                });
+
+                // Mobile onscreen buttons
+                const btnJump = document.getElementById('btn-jump');
+                const btnCrouch = document.getElementById('btn-crouch');
+                
+                btnJump.addEventListener('touchstart', (e) => { e.preventDefault(); if(GameState.current===GameState.STATE_PLAYING) Player.jump(); });
+                btnCrouch.addEventListener('touchstart', (e) => { e.preventDefault(); Player.crouch(true); });
+                btnCrouch.addEventListener('touchend', (e) => { e.preventDefault(); Player.crouch(false); });
+            }
+        };
+
+        // --- ENVIRONMENT & PARALLAX SYSTEM ---
+        class ParallaxLayer {
+            constructor(speedFactor, drawFn) {
+                this.speedFactor = speedFactor;
+                this.drawFn = drawFn;
+                this.x = 0;
+            }
+            update(speed) {
+                this.x -= speed * this.speedFactor;
+                if (this.x <= -1280) {
+                    this.x += 1280;
+                }
+            }
+            draw(ctx) {
+                ctx.save();
+                ctx.translate(this.x, 0);
+                this.drawFn(ctx, 0);
+                this.drawFn(ctx, 1280);
+                ctx.restore();
+            }
+        }
+
+        const Environment = {
+            layers: [],
+            particles: [],
+            init() {
+                this.layers.push(new ParallaxLayer(0.1, (ctx, xOffset) => {
+                    ctx.fillStyle = '#221508';
+                    ctx.beginPath();
+                    ctx.moveTo(xOffset, 580);
+                    ctx.lineTo(xOffset + 100, 420);
+                    ctx.lineTo(xOffset + 280, 580);
+                    ctx.lineTo(xOffset + 450, 380);
+                    ctx.lineTo(xOffset + 650, 580);
+                    ctx.lineTo(xOffset + 900, 400);
+                    ctx.lineTo(xOffset + 1280, 580);
+                    ctx.fill();
+                }));
+
+                this.layers.push(new ParallaxLayer(0.25, (ctx, xOffset) => {
+                    ctx.fillStyle = '#33230e';
+                    ctx.beginPath();
+                    ctx.moveTo(xOffset + 150, 580);
+                    ctx.lineTo(xOffset + 300, 320);
+                    ctx.lineTo(xOffset + 450, 580);
+                    ctx.fill();
+                    ctx.fillRect(xOffset + 700, 440, 220, 140);
+                    ctx.fillStyle = '#251908';
+                    for(let i=0; i<5; i++) {
+                        ctx.fillRect(xOffset + 710 + (i*40), 420, 25, 20);
+                    }
+                    ctx.fillStyle = '#33230e';
+                    ctx.beginPath();
+                    ctx.moveTo(xOffset + 950, 580);
+                    ctx.lineTo(xOffset + 1120, 280);
+                    ctx.lineTo(xOffset + 1280, 580);
+                    ctx.fill();
+                }));
+
+                this.layers.push(new ParallaxLayer(0.5, (ctx, xOffset) => {
+                    ctx.fillStyle = '#483315';
+                    ctx.fillRect(xOffset + 200, 380, 30, 200);
+                    ctx.beginPath();
+                    ctx.moveTo(xOffset + 190, 380);
+                    ctx.lineTo(xOffset + 215, 340);
+                    ctx.lineTo(xOffset + 240, 380);
+                    ctx.fill();
+
+                    ctx.fillRect(xOffset + 800, 350, 45, 230);
+                    ctx.fillStyle = '#5c431d';
+                    ctx.fillRect(xOffset + 790, 340, 65, 20);
+                    ctx.fillRect(xOffset + 790, 560, 65, 20);
+                }));
+
+                this.particles = [];
+                for (let i = 0; i < 40; i++) {
+                    this.particles.push({
+                        x: Math.random() * 1280,
+                        y: Math.random() * 500,
+                        size: Math.random() * 3 + 1,
+                        speedY: (Math.random() * 0.5 - 0.25),
+                        speedX: (Math.random() * 0.5 + 0.2),
+                        alpha: Math.random() * 0.7 + 0.2
+                    });
+                }
+            },
+            update(speed) {
+                this.layers.forEach(l => l.update(speed));
+                this.particles.forEach(p => {
+                    p.x -= speed * 0.3 + p.speedX;
+                    p.y += p.speedY;
+                    if (p.x < 0) p.x = 1280;
+                    if (p.y < 0) p.y = 580;
+                    if (p.y > 580) p.y = 0;
+                });
+            },
+            draw(ctx) {
+                let t = GameState.timeOfDay;
+                let skyGrad = ctx.createLinearGradient(0, 0, 0, 720);
+                if (t < 0.25) {
+                    skyGrad.addColorStop(0, '#3a210d');
+                    skyGrad.addColorStop(1, '#8a521a');
+                } else if (t < 0.5) {
+                    skyGrad.addColorStop(0, '#12263a');
+                    skyGrad.addColorStop(1, '#2c4d6f');
+                } else if (t < 0.75) {
+                    skyGrad.addColorStop(0, '#4a1b0c');
+                    skyGrad.addColorStop(1, '#8a3b14');
+                } else {
+                    skyGrad.addColorStop(0, '#05030a');
+                    skyGrad.addColorStop(1, '#160d26');
+                }
+                ctx.fillStyle = skyGrad;
+                ctx.fillRect(0, 0, 1280, 720);
+
+                if (t > 0.6 || t < 0.15) {
+                    ctx.fillStyle = '#fff8e8';
+                    ctx.shadowBlur = 10;
+                    ctx.shadowColor = '#fff';
+                    ctx.beginPath();
+                    ctx.arc(1050, 120, 35, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                }
+
+                this.layers.forEach(l => l.draw(ctx));
+
+                ctx.save();
+                this.particles.forEach(p => {
+                    ctx.fillStyle = t > 0.6 ? `rgba(255, 220, 100, ${p.alpha})` : `rgba(255, 255, 255, ${p.alpha * 0.5})`;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+                ctx.restore();
+
+                ctx.fillStyle = '#261b0c';
+                ctx.fillRect(0, GameState.groundY, 1280, 140);
+
+                ctx.fillStyle = '#d4af37';
+                ctx.fillRect(0, GameState.groundY, 1280, 6);
+
+                ctx.fillStyle = '#423013';
+                for (let i = 0; i < 1280; i += 40) {
+                    ctx.fillRect(i + 10, GameState.groundY + 12, 20, 8);
+                }
+            }
+        };
+
+        // --- PLAYER SYSTEM (Pharaoh Mummy) ---
+        const Player = {
+            x: 150,
+            y: 580,
+            width: 50,
+            height: 90,
+            vy: 0,
+            gravity: 0.8,
+            jumpForce: -16,
+            isJumping: false,
+            isCrouching: false,
+            animTimer: 0,
+            isDead: false,
+            deathAnimTimer: 0,
+
+            reset() {
+                this.x = 150;
+                this.y = GameState.groundY - this.height;
+                this.vy = 0;
+                this.isJumping = false;
+                this.isCrouching = false;
+                this.animTimer = 0;
+                this.isDead = false;
+                this.deathAnimTimer = 0;
+                this.height = 90;
+            },
+
+            jump() {
+                if (this.isDead) return;
+                if (!this.isJumping && !this.isCrouching) {
+                    this.vy = this.jumpForce;
+                    this.isJumping = true;
+                    AudioSystem.jump();
+                }
+            },
+
+            crouch(enable) {
+                if (this.isDead) return;
+                if (enable) {
+                    this.isCrouching = true;
+                    this.height = 50;
+                    if (!this.isJumping) {
+                        this.y = GameState.groundY - this.height;
+                    }
+                } else {
+                    this.isCrouching = false;
+                    this.height = 90;
+                    this.y = GameState.groundY - this.height;
+                }
+            },
+
+            update() {
+                if (this.isDead) {
+                    this.deathAnimTimer++;
+                    return;
+                }
+
+                this.vy += this.gravity;
+                this.y += this.vy;
+
+                let currentGroundY = GameState.groundY - this.height;
+                if (this.y >= currentGroundY) {
+                    this.y = currentGroundY;
+                    if (this.isJumping) {
+                        AudioSystem.land();
+                    }
+                    this.isJumping = false;
+                    this.vy = 0;
+                }
+
+                if (!this.isJumping) {
+                    this.animTimer += GameState.speed * 0.15;
+                }
+            },
+
+            draw(ctx) {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+
+                if (this.isDead) {
+                    ctx.rotate(Math.PI / 2);
+                    ctx.translate(-this.height, -this.width);
+                }
+
+                ctx.fillStyle = 'rgba(0,0,0,0.4)';
+                ctx.beginPath();
+                ctx.ellipse(this.width/2, this.height + (this.isCrouching ? 5 : 10), this.isCrouching ? 25 : 20, 6, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                if (!this.isJumping && !this.isCrouching && GameState.current === GameState.STATE_PLAYING && Math.random() < 0.3) {
+                    ctx.fillStyle = 'rgba(212, 175, 55, 0.4)';
+                    ctx.fillRect(10 + Math.random()*10, this.height - 5, 6, 6);
+                }
+
+                let bounce = this.isJumping ? 0 : Math.sin(this.animTimer) * 4;
+
+                if (this.isCrouching) {
+                    ctx.fillStyle = '#e8dcc4';
+                    ctx.fillRect(5, 20, 40, 30);
+                    ctx.strokeStyle = '#c5b59b';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(5, 28); ctx.lineTo(45, 28);
+                    ctx.moveTo(5, 38); ctx.lineTo(45, 38);
+                    ctx.stroke();
+
+                    ctx.fillStyle = '#111';
+                    ctx.fillRect(25, 5, 25, 25);
+                    ctx.fillStyle = '#d4af37';
+                    ctx.beginPath();
+                    ctx.moveTo(20, 10); ctx.lineTo(50, 0); ctx.lineTo(45, 20); ctx.fill();
+                    ctx.fillStyle = '#12263a';
+                    ctx.fillRect(32, 2, 6, 16);
+                } else {
+                    ctx.fillStyle = '#e8dcc4';
+                    ctx.fillRect(12, 35 + bounce, 26, 45);
+                    
+                    ctx.strokeStyle = '#c5b59b';
+                    ctx.lineWidth = 2;
+                    for(let by = 42; by < 75; by += 8) {
+                        ctx.beginPath();
+                        ctx.moveTo(12, by + bounce);
+                        ctx.lineTo(38, by + bounce);
+                        ctx.stroke();
+                    }
+
+                    ctx.fillStyle = '#d4af37';
+                    ctx.fillRect(10, 32 + bounce, 30, 8);
+                    ctx.fillStyle = '#12263a';
+                    ctx.fillRect(16, 34 + bounce, 4, 4);
+                    ctx.fillRect(24, 34 + bounce, 4, 4);
+                    ctx.fillRect(32, 34 + bounce, 4, 4);
+
+                    ctx.fillStyle = '#e8dcc4';
+                    let armSwing = Math.sin(this.animTimer) * 10;
+                    ctx.fillRect(8, 45 + bounce + armSwing, 8, 25);
+                    ctx.fillRect(34, 45 + bounce - armSwing, 8, 25);
+
+                    let legSwing = Math.sin(this.animTimer) * 12;
+                    if (this.isJumping) {
+                        ctx.fillRect(14, 80, 8, 12);
+                        ctx.fillRect(28, 75, 8, 12);
+                    } else {
+                        ctx.fillRect(16, 80 + bounce, 8, 10 + legSwing);
+                        ctx.fillRect(26, 80 + bounce, 8, 10 - legSwing);
+                    }
+
+                    ctx.save();
+                    ctx.translate(25, 18 + bounce);
+                    if (this.isJumping) ctx.rotate(-0.1);
+
+                    ctx.fillStyle = '#d4af37';
+                    ctx.fillRect(-12, -15, 24, 25);
+
+                    ctx.strokeStyle = '#000';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(-8, -5); ctx.lineTo(-2, -5); ctx.lineTo(-2, -2);
+                    ctx.moveTo(2, -5); ctx.lineTo(8, -5); ctx.lineTo(8, -2);
+                    ctx.stroke();
+
+                    ctx.fillStyle = '#12263a';
+                    ctx.fillRect(-16, -18, 6, 32);
+                    ctx.fillRect(10, -18, 6, 32);
+
+                    ctx.fillStyle = '#d4af37';
+                    ctx.beginPath();
+                    ctx.moveTo(-18, -18); ctx.lineTo(0, -28); ctx.lineTo(18, -18); ctx.fill();
+                    
+                    ctx.fillStyle = '#ffdf73';
+                    ctx.beginPath();
+                    ctx.moveTo(0, -28);
+                    ctx.lineTo(-4, -40);
+                    ctx.lineTo(4, -40);
+                    ctx.fill();
+                    ctx.fillStyle = '#b32400';
+                    ctx.fillRect(-1, -36, 2, 2);
+
+                    ctx.restore();
+                }
+
+                ctx.restore();
+            },
+
+            getHitbox() {
+                return {
+                    x: this.x + 10,
+                    y: this.y + 5,
+                    width: this.width - 20,
+                    height: this.height - 10
+                };
+            }
+        };
+
+        // --- OBSTACLES SYSTEM (Enhanced with Flying Elements & Patterns) ---
+        class Obstacle {
+            constructor(type, x) {
+                this.type = type;
+                this.x = x;
+                this.passed = false;
+                this.animOffset = Math.random() * Math.PI * 2;
+
+                switch(type) {
+                    case 'book': // Ground tome
+                        this.width = 45;
+                        this.height = 40;
+                        this.y = GameState.groundY - this.height;
+                        this.isFlying = false;
+                        break;
+                    case 'vase': // Ancient Canopic Vase
+                        this.width = 35;
+                        this.height = 50;
+                        this.y = GameState.groundY - this.height;
+                        this.isFlying = false;
+                        break;
+                    case 'tablet': // Stone Tablet
+                        this.width = 50;
+                        this.height = 65;
+                        this.y = GameState.groundY - this.height;
+                        this.isFlying = false;
+                        break;
+                    case 'chest': // Chest
+                        this.width = 55;
+                        this.height = 45;
+                        this.y = GameState.groundY - this.height;
+                        this.isFlying = false;
+                        break;
+                    case 'flyingBook': // Flying magical book (requires ducking)
+                        this.width = 45;
+                        this.height = 32;
+                        // Placed securely so normal height hits, but crouching clears it cleanly
+                        this.y = GameState.groundY - 110; 
+                        this.isFlying = true;
+                        break;
+                    case 'scroll': // Flying papyrus scroll
+                        this.width = 50;
+                        this.height = 28;
+                        this.y = GameState.groundY - 125;
+                        this.isFlying = true;
+                        break;
+                    case 'scarab': // Glowing magical golden scarab beetle
+                        this.width = 38;
+                        this.height = 30;
+                        this.y = GameState.groundY - 100;
+                        this.isFlying = true;
+                        break;
+                    case 'glyph': // Floating magical hieroglyph symbol
+                        this.width = 35;
+                        this.height = 45;
+                        this.y = GameState.groundY - 135;
+                        this.isFlying = true;
+                        break;
+                }
+            }
+
+            update(speed) {
+                this.x -= speed;
+                // Add subtle vertical hovering motion for flying items
+                if (this.isFlying) {
+                    this.animOffset += 0.08;
+                }
+            }
+
+            draw(ctx) {
+                ctx.save();
+                let renderY = this.y;
+                if (this.isFlying) {
+                    renderY += Math.sin(this.animOffset) * 6;
+                }
+                ctx.translate(this.x, renderY);
+
+                if (this.type === 'book') {
+                    ctx.fillStyle = '#5c1d1d';
+                    ctx.fillRect(0, 5, this.width, this.height - 5);
+                    ctx.fillStyle = '#d4af37';
+                    ctx.fillRect(0, 5, 6, 8);
+                    ctx.fillRect(0, this.height - 8, 6, 8);
+                    ctx.fillStyle = '#f4e8c1';
+                    ctx.fillRect(6, 10, this.width - 12, this.height - 15);
+                    ctx.fillStyle = '#333';
+                    ctx.fillRect(12, 16, 10, 3);
+                    ctx.fillRect(12, 24, 15, 3);
+                } 
+                else if (this.type === 'vase') {
+                    ctx.fillStyle = '#a66b26';
+                    ctx.beginPath();
+                    ctx.ellipse(this.width/2, this.height - 20, 16, 22, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillRect(this.width/2 - 8, 5, 16, 15);
+                    ctx.fillStyle = '#d4af37';
+                    ctx.fillRect(this.width/2 - 12, 18, 24, 6);
+                } 
+                else if (this.type === 'tablet') {
+                    ctx.fillStyle = '#6e6557';
+                    ctx.fillRect(0, 0, this.width, this.height);
+                    ctx.beginPath();
+                    ctx.arc(this.width/2, 0, this.width/2, Math.PI, 0, false);
+                    ctx.fill();
+                    ctx.fillStyle = '#3b3429';
+                    ctx.fillRect(10, 15, 12, 12);
+                    ctx.fillRect(28, 15, 12, 12);
+                    ctx.fillRect(10, 32, 30, 8);
+                    ctx.fillRect(10, 45, 20, 8);
+                } 
+                else if (this.type === 'chest') {
+                    ctx.fillStyle = '#d4af37';
+                    ctx.fillRect(0, 10, this.width, this.height - 10);
+                    ctx.fillStyle = '#b89425';
+                    ctx.fillRect(-3, 0, this.width + 6, 12);
+                    ctx.fillStyle = '#12263a';
+                    ctx.fillRect(15, 18, 8, 20);
+                    ctx.fillRect(32, 18, 8, 20);
+                }
+                else if (this.type === 'flyingBook') {
+                    ctx.fillStyle = 'rgba(212, 175, 55, 0.25)';
+                    ctx.beginPath();
+                    ctx.arc(this.width/2, this.height/2, 30, 0, Math.PI*2);
+                    ctx.fill();
+
+                    ctx.fillStyle = '#12263a';
+                    ctx.fillRect(0, 4, this.width, this.height - 8);
+                    ctx.fillStyle = '#d4af37';
+                    ctx.fillRect(this.width/2 - 2, 4, 4, this.height - 8);
+                    ctx.fillStyle = '#f4e8c1';
+                    ctx.beginPath();
+                    ctx.moveTo(0, 12); ctx.lineTo(-12, 2); ctx.lineTo(0, 22);
+                    ctx.moveTo(this.width, 12); ctx.lineTo(this.width + 12, 2); ctx.lineTo(this.width, 22);
+                    ctx.fill();
+                }
+                else if (this.type === 'scroll') {
+                    // Flying Papyrus Scroll
+                    ctx.fillStyle = '#e8dcc4';
+                    ctx.fillRect(4, 6, this.width - 8, this.height - 12);
+                    // Rolled scroll borders
+                    ctx.fillStyle = '#bfa77d';
+                    ctx.fillRect(0, 2, 8, this.height - 4);
+                    ctx.fillRect(this.width - 8, 2, 8, this.height - 4);
+                    // Magical glow
+                    ctx.strokeStyle = '#d4af37';
+                    ctx.lineWidth = 1.5;
+                    ctx.strokeRect(4, 6, this.width - 8, this.height - 12);
+                }
+                else if (this.type === 'scarab') {
+                    // Magical Golden Scarab Beetle
+                    ctx.fillStyle = '#d4af37';
+                    ctx.beginPath();
+                    ctx.ellipse(this.width/2, this.height/2, this.width/2, this.height/2 - 4, 0, 0, Math.PI*2);
+                    ctx.fill();
+                    // Wing divider line
+                    ctx.strokeStyle = '#12263a';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(this.width/2, 4); ctx.lineTo(this.width/2, this.height - 4); ctx.stroke();
+                    // Glowing cyan magical aura gems
+                    ctx.fillStyle = '#00e5ff';
+                    ctx.fillRect(this.width/2 - 3, this.height/2 - 4, 6, 6);
+                }
+                else if (this.type === 'glyph') {
+                    // Floating Magical Hieroglyph Symbol (Ankh/Eye of Horus motif)
+                    ctx.fillStyle = '#ffdf73';
+                    ctx.shadowBlur = 12;
+                    ctx.shadowColor = '#d4af37';
+                    ctx.fillRect(this.width/2 - 4, 0, 8, this.height);
+                    ctx.fillRect(6, this.height/2 - 6, this.width - 12, 8);
+                    ctx.beginPath();
+                    ctx.arc(this.width/2, 12, 10, 0, Math.PI*2);
+                    ctx.fill();
+                    ctx.shadowBlur = 0; // reset
+                }
+
+                ctx.restore();
+            }
+
+            getHitbox() {
+                let renderY = this.y;
+                if (this.isFlying) {
+                    renderY += Math.sin(this.animOffset) * 6;
+                }
+                return {
+                    x: this.x + 4,
+                    y: renderY + 4,
+                    width: this.width - 8,
+                    height: this.height - 8
+                };
+            }
+        }
+
+        const ObstacleManager = {
+            obstacles: [],
+            spawnCooldown: 0,
+            patternQueue: [],
+
+            reset() {
+                this.obstacles = [];
+                this.spawnCooldown = 120; // Safe initial breathing space
+                this.patternQueue = [];
+            },
+
+            update() {
+                // Handle movement and passing of existing obstacles
+                for (let i = this.obstacles.length - 1; i >= 0; i--) {
+                    let obs = this.obstacles[i];
+                    obs.update(GameState.speed);
+
+                    if (!obs.passed && obs.x + obs.width < Player.x) {
+                        obs.passed = true;
+                        GameState.score += 25;
+                        AudioSystem.score();
+                    }
+
+                    if (obs.x + obs.width < -100) {
+                        this.obstacles.splice(i, 1);
+                    }
+                }
+
+                // Safe-distance & Pattern-based Spawning System
+                if (this.spawnCooldown > 0) {
+                    this.spawnCooldown--;
+                    return;
+                }
+
+                if (this.patternQueue.length === 0) {
+                    this.generatePattern();
+                }
+
+                let nextItemType = this.patternQueue.shift();
+                if (nextItemType !== 'NONE') {
+                    this.obstacles.push(new Obstacle(nextItemType, 1350));
+                }
+
+                // Dynamic gap scaling based on level/speed with guaranteed safe minimum distance
+                let baseWait = Math.max(55, 110 - Math.floor(GameState.level * 1.2));
+                let randomVariance = Math.floor(Math.random() * 35);
+                this.spawnCooldown = baseWait + randomVariance;
+            },
+
+            generatePattern() {
+                // Select intelligently among balanced patterns ensuring fair play & Chrome Dino rhythm
+                const patternsList = [
+                    // Pattern A: Single ground obstacle with generous spacing
+                    ['ground'],
+                    // Pattern B: Ground obstacle followed by a flying obstacle (requires jump then duck or vice versa)
+                    ['ground', 'flying'],
+                    // Pattern C: Flying obstacle followed by ground obstacle
+                    ['flying', 'ground'],
+                    // Pattern D: Two safe spaced ground items
+                    ['ground', 'ground'],
+                    // Pattern E: Peaceful long empty corridor
+                    ['NONE'],
+                    // Pattern F: Single flying obstacle
+                    ['flying']
+                ];
+
+                let chosen = patternsList[Math.floor(Math.random() * patternsList.length)];
+                
+                chosen.forEach(item => {
+                    if (item === 'ground') {
+                        const groundTypes = ['book', 'vase', 'tablet', 'chest'];
+                        this.patternQueue.push(groundTypes[Math.floor(Math.random() * groundTypes.length)]);
+                    } else if (item === 'flying') {
+                        const flyingTypes = ['flyingBook', 'scroll', 'scarab', 'glyph'];
+                        this.patternQueue.push(flyingTypes[Math.floor(Math.random() * flyingTypes.length)]);
+                    } else {
+                        this.patternQueue.push('NONE');
+                    }
+                });
+            },
+
+            draw(ctx) {
+                this.obstacles.forEach(obs => obs.draw(ctx));
+            }
+        };
+
+        // --- COLLISION SYSTEM ---
+        const Collision = {
+            checkRectOverlap(r1, r2) {
+                return r1.x < r2.x + r2.width &&
+                       r1.x + r1.width > r2.x &&
+                       r1.y < r2.y + r2.height &&
+                       r1.y + r1.height > r2.y;
+            },
+
+            checkAll() {
+                let pBox = Player.getHitbox();
+                for (let obs of ObstacleManager.obstacles) {
+                    if (this.checkRectOverlap(pBox, obs.getHitbox())) {
+                        triggerGameOver();
+                        break;
+                    }
+                }
+            }
+        };
+
+        // --- GAME LOOP & CONTROLLER ---
+        function initGame() {
+            GameState.canvas = document.getElementById('gameCanvas');
+            GameState.ctx = GameState.canvas.getContext('2d');
+
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+
+            Environment.init();
+            Input.init();
+
+            updateUI();
+            showMenu();
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        function resizeCanvas() {
+            GameState.canvas.width = 1280;
+            GameState.canvas.height = 720;
+        }
+
+        function startGame() {
+            GameState.score = 0;
+            GameState.level = 1;
+            GameState.speed = 5;
+            GameState.timeOfDay = 0;
+            Player.reset();
+            ObstacleManager.reset();
+
+            GameState.current = GameState.STATE_PLAYING;
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('gameover-screen').classList.add('hidden');
+        }
+
+        function showMenu() {
+            GameState.current = GameState.STATE_MENU;
+            document.getElementById('start-screen').classList.remove('hidden');
+            document.getElementById('gameover-screen').classList.add('hidden');
+            updateUI();
+        }
+
+        function triggerGameOver() {
+            GameState.current = GameState.STATE_GAMEOVER;
+            Player.isDead = true;
+            AudioSystem.hit();
+
+            if (GameState.score > GameState.highScore) {
+                GameState.highScore = GameState.score;
+                localStorage.setItem('pharaoh_highscore', GameState.highScore);
+            }
+
+            document.getElementById('go-score').innerText = String(GameState.score).padStart(7, '0');
+            document.getElementById('go-highscore').innerText = String(GameState.highScore).padStart(7, '0');
+            document.getElementById('go-level').innerText = String(GameState.level).padStart(3, '0');
+
+            document.getElementById('gameover-screen').classList.remove('hidden');
+        }
+
+        function updateUI() {
+            document.getElementById('hud-score').innerText = String(GameState.score).padStart(7, '0');
+            document.getElementById('hud-level').innerText = String(GameState.level).padStart(3, '0');
+            document.getElementById('hud-highscore').innerText = String(GameState.highScore).padStart(7, '0');
+        }
+
+        let lastTime = 0;
+        function gameLoop(timestamp) {
+            let dt = timestamp - lastTime;
+
+            if (GameState.current === GameState.STATE_PLAYING) {
+                GameState.score += 1;
+                GameState.level = Math.min(999999, Math.floor(GameState.score / 250) + 1);
+                // Smooth progressive difficulty speed curve with safety ceiling
+                GameState.speed = Math.min(GameState.maxSpeed, 5 + (GameState.level - 1) * 0.2);
+                GameState.timeOfDay = (GameState.timeOfDay + 0.0003) % 1.0;
+
+                Environment.update(GameState.speed);
+                Player.update();
+                ObstacleManager.update();
+                Collision.checkAll();
+                updateUI();
+            }
+
+            const ctx = GameState.ctx;
+            ctx.clearRect(0, 0, 1280, 720);
+
+            Environment.draw(ctx);
+            ObstacleManager.draw(ctx);
+            Player.draw(ctx);
+
+            lastTime = timestamp;
+            requestAnimationFrame(gameLoop);
+        }
+
+        window.onload = initGame;
+    </script>
+</body>
+</html>
