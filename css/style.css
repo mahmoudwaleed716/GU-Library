@@ -57703,3 +57703,195 @@ div.obelisk.obelisk-right {
         transition: none !important;
     }
 }
+/* =========================================================
+   PERFORMANCE BOOST — SAFE
+   لا يغير التصميم أو أماكن العناصر
+========================================================= */
+
+/* منع المتصفح من إعادة حساب Layout بدون داعي */
+img,
+video {
+    content-visibility: auto;
+}
+
+/* تحسين العناصر التي عليها Hover / Transform */
+.temple-action,
+.action-symbol-v2,
+button,
+a {
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+}
+
+/* تحسين الحركة فقط أثناء التفاعل */
+.temple-action:hover,
+.temple-action:focus-visible {
+    will-change: transform;
+}
+
+/* منع التحديد والحركات غير الضرورية للأيقونات */
+.action-symbol-v2 {
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+/* تحسين رسم العناصر التي تتحرك */
+.temple-actions-v2 .action-symbol-v2 {
+    transform: translateZ(0);
+}
+
+/* تقليل إعادة الرسم أثناء الـ hover */
+.temple-actions-v2 .action-side-label,
+.temple-actions-v2 .action-label-v2 {
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+}
+/* =========================================================
+   NOVA BOLT TEAM — EXPANDING COPYRIGHT BUTTON
+========================================================= */
+
+.team-copyright {
+    position: relative !important;
+
+    width: 46px !important;
+    height: 46px !important;
+
+    margin: -60px auto 0 !important;
+    padding: 0 !important;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    box-sizing: border-box !important;
+
+    overflow: hidden !important;
+
+    background: rgba(24, 19, 12, 0.96) !important;
+
+    border: 1px solid rgba(216, 184, 106, 0.75) !important;
+    border-radius: 50% !important;
+
+    color: #e2c477 !important;
+    text-decoration: none !important;
+
+    cursor: pointer !important;
+
+    z-index: 9999 !important;
+
+    transition:
+        width 0.4s cubic-bezier(.22, 1, .36, 1),
+        border-radius 0.4s ease,
+        border-color 0.3s ease,
+        box-shadow 0.3s ease !important;
+}
+
+
+/* =========================================================
+   COPYRIGHT SYMBOL
+========================================================= */
+
+.team-copyright .copyright-symbol {
+    flex-shrink: 0 !important;
+
+    font-family: Georgia, "Times New Roman", serif !important;
+
+    font-size: 25px !important;
+    font-weight: 500 !important;
+
+    line-height: 1 !important;
+
+    color: #e2c477 !important;
+
+    transition:
+        transform 0.3s ease,
+        margin 0.4s ease !important;
+}
+
+
+/* =========================================================
+   TEAM NAME
+========================================================= */
+
+.team-copyright .team-name {
+    max-width: 0 !important;
+
+    margin-left: 0 !important;
+
+    overflow: hidden !important;
+
+    white-space: nowrap !important;
+
+    opacity: 0 !important;
+
+    color: #e4c77b !important;
+
+    font-family: Georgia, "Times New Roman", serif !important;
+
+    font-size: 12px !important;
+    font-weight: 600 !important;
+
+    letter-spacing: 1.5px !important;
+
+    transition:
+        max-width 0.4s cubic-bezier(.22, 1, .36, 1),
+        margin-left 0.3s ease,
+        opacity 0.2s ease !important;
+}
+
+
+/* =========================================================
+   HOVER — TRANSFORM INTO BAR
+========================================================= */
+
+.team-copyright:hover {
+    width: 190px !important;
+
+    border-radius: 23px !important;
+
+    border-color: #f0d58c !important;
+
+    box-shadow:
+        0 0 12px rgba(216, 184, 106, 0.25),
+        0 0 25px rgba(216, 184, 106, 0.12),
+        0 6px 18px rgba(0, 0, 0, 0.45) !important;
+}
+
+
+/* © stays on the left */
+
+.team-copyright:hover .copyright-symbol {
+    transform: scale(1.05) !important;
+
+    margin-right: 3px !important;
+}
+
+
+/* Show team name INSIDE the bar */
+
+.team-copyright:hover .team-name {
+    max-width: 150px !important;
+
+    margin-left: 8px !important;
+
+    opacity: 1 !important;
+}
+
+
+/* =========================================================
+   SUBTLE INNER BORDER
+========================================================= */
+
+.team-copyright::before {
+    content: "" !important;
+
+    position: absolute !important;
+
+    inset: 4px !important;
+
+    border: 1px solid rgba(216, 184, 106, 0.16) !important;
+
+    border-radius: inherit !important;
+
+    pointer-events: none !important;
+}
